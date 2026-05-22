@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FanOS Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f5f7; --surface:#ffffff; --surface2:#f9f9fb;
+  --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.05);
+  --navy:#1d2b3a; --navy-mid:#4a5f72; --navy-dim:#8a9ab0;
+  --fp-bg:#f7f8fa; --fp-dot:rgba(29,43,58,0.09); --lbl-bg:rgba(255,255,255,0.9);
+  --blue:#0071e3; --green:#28c840; --yellow:#e6ac00; --red:#ff3b30; --grey:#b0bec5;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --sans:'DM Sans',-apple-system,sans-serif; --mono:'DM Mono',monospace;
+}
+[data-theme="dark"] {
+  --bg:#111418; --surface:#1c2128; --surface2:#222830;
+  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.05);
+  --navy:#e8eef5; --navy-mid:#9aafc4; --navy-dim:#4a6070;
+  --fp-bg:#151a20; --fp-dot:rgba(200,220,255,0.06); --lbl-bg:rgba(28,33,40,0.92);
+  --blue:#4a9eff; --green:#30d158; --yellow:#ffd60a; --red:#ff453a; --grey:#4a6070;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html{height:100%;background:var(--bg);}
+body{
+  height:100%; min-height:100dvh;
+  overflow:hidden;background:var(--bg);
+  font-family:var(--sans);color:var(--navy);
+  transition:background 0.3s,color 0.3s;
+}
+.app{
+  display:flex;flex-direction:column;
+  height:100dvh; /* dynamic viewport height — fixes Safari landscape */
+  max-height:100dvh;
+}
+
+@keyframes logo-spin{to{transform:rotate(360deg);}}
+.logo-fan-svg{width:24px;height:24px;animation:logo-spin 5s linear infinite;transform-origin:center;}
+@keyframes sdot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(40,200,64,0.4);}50%{box-shadow:0 0 0 4px rgba(40,200,64,0.1);}}
+@keyframes fault-flash{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;align-items:center;padding:0 12px;height:48px;gap:8px;
+  background:var(--surface);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);flex-shrink:0;z-index:200;
+}
+.logo-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.logo-text{font-size:15px;font-weight:700;letter-spacing:-0.3px;color:var(--navy);}
+.logo-text span{color:var(--blue);}
+.logo-badge{font-size:8px;font-weight:700;background:var(--blue);color:#fff;padding:2px 4px;border-radius:3px;}
+.t-div{width:1px;height:26px;background:var(--border);flex-shrink:0;}
+.topbar-site{flex:1;min-width:0;}
+.site-name{font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.site-loc{font-size:9px;color:var(--navy-dim);}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.status-pill{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:500;color:#1a8a35;
+  background:#e6faea;border:1px solid rgba(40,200,64,0.25);border-radius:20px;padding:2px 8px 2px 5px;}
+[data-theme="dark"] .status-pill{color:#30d158;background:rgba(48,209,88,0.12);border-color:rgba(48,209,88,0.2);}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:sdot-pulse 2s ease-in-out infinite;}
+.topbar-clock{font-family:var(--mono);font-size:10px;color:var(--navy-mid);text-align:right;line-height:1.3;
+  display:none;} /* hidden on mobile, shown on desktop */
+@media(min-width:640px){.topbar-clock{display:block;}}
+.topbar-clock-date{font-size:8px;color:var(--navy-dim);}
+.dark-toggle{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;flex-shrink:0;}
+
+/* Power meter in topbar */
+.power-badge{
+  display:flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--blue);background:rgba(0,113,227,0.08);
+  border:1px solid rgba(0,113,227,0.18);border-radius:6px;
+  padding:3px 7px;white-space:nowrap;flex-shrink:0;
+}
+.power-badge-icon{font-size:11px;}
+
+/* ── CTRL BAR ── */
+.ctrl-bar{
+  display:flex;align-items:stretch;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  height:46px;overflow:hidden;
+}
+/* On narrow screens, group stats + global btns together and allow scroll */
+.stat-group{
+  display:flex;align-items:stretch;flex-shrink:0;
+  border-right:1px solid var(--border);
+}
+.stat-item{
+  display:flex;align-items:center;gap:5px;padding:0 10px;
+  cursor:pointer;transition:background 0.1s;
+}
+.stat-item:hover{background:var(--bg);}
+.stat-num{font-size:18px;font-weight:700;letter-spacing:-0.5px;line-height:1;}
+.stat-lbl{font-size:7px;font-weight:600;letter-spacing:0.5px;color:var(--navy-dim);text-transform:uppercase;margin-top:1px;}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.stat-div{width:1px;background:var(--border);margin:8px 0;}
+
+/* fault stat flashes when count > 0 */
+.stat-item.has-fault .stat-num{animation:fault-flash 1.2s ease-in-out infinite;}
+
+.global-btns{display:flex;align-items:center;gap:5px;padding:0 8px;border-right:1px solid var(--border);flex-shrink:0;}
+.g-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:7px;border:none;
+  font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.g-btn-on{background:var(--green);color:#fff;}
+.g-btn-on:hover{filter:brightness(1.08);}
+.g-btn-off{background:rgba(255,59,48,0.1);color:var(--red);border:1px solid rgba(255,59,48,0.2);}
+.g-btn-off:hover{background:var(--red);color:#fff;}
+
+/* Zone dropdown */
+.zone-dropdown-wrap{display:flex;align-items:center;padding:0 8px;flex-shrink:0;}
+.zone-dropdown{
+  padding:5px 10px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);font-family:var(--sans);font-size:11px;
+  font-weight:600;color:var(--navy-mid);cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  padding-right:24px;
+}
+
+/* ── SPEED BAR — horizontal scroll on mobile ── */
+.speed-bar{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  flex-shrink:0;height:38px;
+  padding:0 8px;
+  overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;white-space:nowrap;
+}
+.speed-bar::-webkit-scrollbar{display:none;}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;
+  color:var(--navy-dim);flex-shrink:0;}
+.sb-divider{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px;}
+.sb-group{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;}
+.sb-group-lbl{font-size:9px;font-weight:700;color:var(--navy-dim);letter-spacing:0.3px;flex-shrink:0;}
+.spd-btn{
+  padding:3px 9px;border-radius:5px;border:1px solid var(--border);
+  background:var(--surface);font-family:var(--sans);font-size:10px;font-weight:600;
+  color:var(--navy-mid);cursor:pointer;transition:all 0.12s;white-space:nowrap;flex-shrink:0;
+}
+.spd-btn:active{transform:scale(0.95);}
+.spd-btn.lo.active{background:rgba(0,113,227,0.12);border-color:var(--blue);color:var(--blue);}
+.spd-btn.md.active{background:rgba(40,200,64,0.12);border-color:var(--green);color:var(--green);}
+.spd-btn.hi.active{background:rgba(255,59,48,0.1);border-color:var(--red);color:var(--red);}
+
+/* Type-specific all-on/off section in speed bar */
+.type-btns{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;}
+.type-btn{
+  padding:3px 8px;border-radius:5px;border:1px solid var(--border);
+  background:var(--surface);font-family:var(--sans);font-size:9px;font-weight:600;
+  color:var(--navy-mid);cursor:pointer;transition:all 0.12s;white-space:nowrap;flex-shrink:0;
+}
+.type-btn.on-btn:active,.type-btn.on-btn:hover{background:rgba(40,200,64,0.12);border-color:var(--green);color:var(--green);}
+.type-btn.off-btn:active,.type-btn.off-btn:hover{background:rgba(255,59,48,0.1);border-color:var(--red);color:var(--red);}
+
+/* ── BODY ── */
+.body{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* ── FLOOR PLAN ── */
+.floorplan{
+  flex:1;position:relative;overflow:hidden;
+  background:var(--fp-bg);transition:background 0.3s;
+  min-width:0;
+}
+.floorplan::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,var(--fp-dot) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.fp-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+/* zone overlay border - shown when zone is selected */
+.zone-overlay{
+  position:absolute;pointer-events:none;z-index:5;
+  border:2px solid rgba(148,0,255,0.5);border-radius:8px;
+  background:rgba(148,0,255,0.03);
+  transition:all 0.3s;display:none;
+}
+.zone-overlay.visible{display:block;}
+
+/* ── DEVICE NODES ── */
+.dev{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;z-index:10;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation; /* allows tap, prevents double-tap zoom */
+}
+.dev-icon-wrap{
+  transition:none;display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.13));
+}
+.dev-icon-wrap svg{
+  transform-origin:50% 50%;
+  display:block;
+}
+.dev:hover .dev-icon-wrap,.dev:active .dev-icon-wrap{transform:scale(1.15);}
+.dev.selected .dev-icon-wrap{transform:scale(1.2);filter:drop-shadow(0 0 8px rgba(0,113,227,0.55));}
+.dev.dragging{opacity:0.7;z-index:50;cursor:grabbing;}
+.dev.estop .dev-icon-wrap{animation:fault-flash 0.8s ease-in-out infinite;}
+
+.dev-lbl-id{
+  font-size:7px;font-weight:600;color:var(--navy);text-align:center;
+  white-space:nowrap;background:var(--lbl-bg);padding:1px 3px;border-radius:3px;line-height:1.3;
+}
+.dev-lbl-st{font-family:var(--mono);font-size:6px;text-align:center;line-height:1;}
+
+/* Edit mode indicator */
+.edit-mode-banner{
+  display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  background:var(--blue);color:#fff;border-radius:20px;
+  padding:5px 16px;font-size:11px;font-weight:600;z-index:30;
+  box-shadow:0 4px 16px rgba(0,113,227,0.3);
+}
+.edit-mode .edit-mode-banner{display:block;}
+.edit-mode .dev{cursor:grab;touch-action:none;}
+
+/* ── FAULT LIST MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-sheet{
+  background:var(--surface);border-radius:16px 16px 0 0;
+  width:100%;max-width:480px;max-height:70vh;
+  overflow-y:auto;padding:0;
+  transform:translateY(20px);transition:transform 0.25s;
+}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-header{
+  position:sticky;top:0;background:var(--surface);
+  padding:16px 20px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;z-index:1;
+}
+.modal-title{font-size:16px;font-weight:700;color:var(--navy);}
+.modal-close{font-size:20px;color:var(--navy-dim);cursor:pointer;padding:4px;}
+.fault-item{
+  padding:12px 20px;border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+}
+.fault-item:hover{background:var(--bg);}
+.fault-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;animation:fault-flash 1s ease-in-out infinite;}
+.fault-item-name{font-size:13px;font-weight:600;color:var(--navy);}
+.fault-item-code{font-family:var(--mono);font-size:11px;color:var(--red);margin-top:2px;}
+.fault-item-zone{font-size:10px;color:var(--navy-dim);margin-top:1px;}
+.fault-item-right{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--navy-dim);}
+
+/* ── DETAIL PANEL ── */
+.detail{
+  width:0;background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+  transition:width 0.26s cubic-bezier(0.4,0,0.2,1);
+}
+.detail.open{width:252px;}
+@media(max-width:500px){
+  .detail.open{
+    position:fixed;right:0;top:0;bottom:0;width:100% !important;
+    z-index:300;border-left:none;
+    box-shadow:-4px 0 24px rgba(0,0,0,0.15);
+  }
+}
+.detail-inner{padding:14px;overflow-y:auto;flex:1;position:relative;min-width:252px;}
+.det-close{
+  position:absolute;top:0;right:0;width:30px;height:30px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;color:var(--navy-dim);
+}
+.det-name{font-size:20px;font-weight:700;letter-spacing:-0.4px;padding-right:34px;color:var(--navy);}
+.det-zone{font-size:10px;color:var(--navy-dim);margin-top:2px;}
+.det-status{display:flex;align-items:center;gap:7px;margin-top:10px;padding:8px 11px;border-radius:9px;}
+.det-status.running{background:rgba(40,200,64,0.1);}
+.det-status.stopped{background:var(--surface2);}
+.det-status.ramping{background:rgba(0,113,227,0.1);}
+.det-status.reversing{background:rgba(0,113,227,0.08);}
+.det-status.fault  {background:rgba(230,172,0,0.12);}
+.det-status.estop  {background:rgba(255,59,48,0.1);}
+.det-sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.det-slbl{font-size:12px;font-weight:600;}
+.det-slbl.running{color:var(--green);} .det-slbl.stopped{color:var(--navy-mid);}
+.det-slbl.ramping,.det-slbl.reversing{color:var(--blue);} .det-slbl.fault{color:var(--yellow);} .det-slbl.estop{color:var(--red);}
+
+/* Voltage badge */
+.voltage-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--navy-mid);background:var(--surface2);
+  border:1px solid var(--border);border-radius:5px;padding:2px 7px;
+  margin-top:6px;
+}
+
+.speed-big{font-size:36px;font-weight:700;letter-spacing:-1.5px;line-height:1;margin-top:12px;color:var(--navy);}
+.speed-unit{font-size:15px;font-weight:400;color:var(--navy-mid);}
+.speed-hz{font-family:var(--mono);font-size:10px;color:var(--navy-dim);margin-top:2px;}
+
+/* Speed track with "accepted" flash */
+.speed-track{
+  height:5px;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:3px;margin:10px 0 5px;cursor:pointer;position:relative;overflow:visible;
+}
+.speed-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#4a9eff,var(--blue));
+  position:relative;
+  transition:width 0.15s ease; /* fast for immediate feedback */
+}
+.speed-fill.accepted{background:linear-gradient(90deg,var(--green),#1a8a35);}
+.speed-fill::after{
+  content:'';position:absolute;right:-5px;top:-3.5px;width:12px;height:12px;
+  background:var(--blue);border-radius:50%;border:2.5px solid var(--surface);
+  box-shadow:0 1px 4px rgba(0,113,227,0.4);
+}
+.speed-fill.accepted::after{background:var(--green);}
+.speed-range{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--navy-dim);}
+.preset-row{display:flex;gap:4px;margin-top:8px;}
+.preset-btn{flex:1;padding:5px 0;border-radius:6px;border:1px solid var(--border);background:var(--surface2);
+  font-family:var(--sans);font-size:11px;font-weight:600;color:var(--navy-mid);cursor:pointer;transition:all 0.12s;text-align:center;}
+.preset-btn:hover,.preset-btn:active{border-color:var(--blue);color:var(--blue);}
+.preset-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+.det-sec-lbl{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:12px 0 5px;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2);}
+.data-row:last-child{border-bottom:none;}
+.dr-lbl{font-size:11px;color:var(--navy-mid);}
+.dr-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--navy);}
+.dr-val.ok{color:var(--green);} .dr-val.warn{color:var(--yellow);} .dr-val.bad{color:var(--red);}
+
+/* Direction row — HVLS only */
+.dir-row{display:flex;gap:4px;}
+.dir-btn{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);
+  font-family:var(--sans);font-size:11px;font-weight:600;color:var(--navy-mid);cursor:pointer;
+  transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.dir-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+[data-theme="dark"] .dir-btn.active{background:var(--blue);border-color:var(--blue);}
+
+.det-actions{display:flex;gap:5px;margin-top:12px;}
+.det-btn{flex:1;padding:9px 0;border-radius:7px;border:none;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.12s;}
+.det-btn-start{background:var(--green);color:#fff;}
+.det-btn-start:hover{filter:brightness(1.08);}
+.det-btn-stop{background:var(--surface2);color:var(--navy-mid);border:1px solid var(--border);}
+.det-btn-stop:hover{background:rgba(255,59,48,0.1);color:var(--red);border-color:rgba(255,59,48,0.3);}
+.fault-btn{width:100%;margin-top:6px;padding:8px;border-radius:7px;
+  border:1px solid rgba(230,172,0,0.4);background:rgba(230,172,0,0.1);color:var(--yellow);
+  font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.12s;}
+.fault-btn:hover{background:var(--yellow);color:#000;}
+
+/* LEGEND */
+.legend{
+  position:absolute;bottom:8px;left:8px;display:flex;gap:8px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:7px;
+  padding:5px 8px;z-index:20;
+}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:8px;font-weight:500;color:var(--navy-mid);}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* TOAST */
+.start-toast{
+  position:fixed;bottom:calc(58px + var(--safe-bottom));left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--navy);color:#fff;border-radius:12px;
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:400;
+  opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;
+  min-width:240px;max-width:90vw;
+}
+[data-theme="dark"] .start-toast{background:var(--surface);border:1px solid var(--border);}
+.start-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.toast-icon{font-size:16px;flex-shrink:0;}
+.toast-body{flex:1;min-width:0;}
+.toast-title{font-size:11px;font-weight:600;color:#fff;line-height:1.2;}
+[data-theme="dark"] .toast-title{color:var(--navy);}
+.toast-sub{font-size:9px;color:rgba(255,255,255,0.6);margin-top:1px;font-family:var(--mono);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+[data-theme="dark"] .toast-sub{color:var(--navy-dim);}
+.toast-prog{height:3px;background:rgba(255,255,255,0.2);border-radius:2px;margin-top:5px;overflow:hidden;}
+.toast-prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s linear;}
+.toast-cancel{font-size:10px;font-weight:600;color:rgba(255,255,255,0.5);cursor:pointer;
+  white-space:nowrap;flex-shrink:0;padding:3px 6px;border-radius:5px;}
+.toast-cancel:hover{background:rgba(255,255,255,0.1);color:#fff;}
+
+/* FA INTERLOCK BANNER */
+.fa-banner{
+  position:fixed;top:0;left:0;right:0;z-index:600;
+  background:var(--red);color:#fff;text-align:center;
+  padding:10px 16px;font-size:13px;font-weight:700;letter-spacing:0.5px;
+  display:none;animation:fault-flash 1s ease-in-out infinite;
+}
+.fa-banner.active{display:block;}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  display:flex;align-items:stretch;
+  height:calc(50px + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  background:var(--surface);border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;cursor:pointer;color:var(--navy-dim);font-size:8px;font-weight:500;
+  transition:color 0.12s;border:none;background:none;font-family:var(--sans);
+  -webkit-tap-highlight-color:transparent;padding-bottom:2px;
+}
+.bnav-item.active{color:var(--blue);}
+.bnav-badge{position:relative;}
+.bnav-badge::after{
+  content:'1';position:absolute;top:-5px;right:-9px;background:var(--red);
+  color:#fff;font-size:7px;font-weight:700;width:13px;height:13px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;border:1.5px solid var(--surface);
+}
+
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* LANDSCAPE TWEAKS */
+@media(orientation:landscape) and (max-height:500px){
+  .topbar{height:40px;}
+  .ctrl-bar{height:38px;}
+  .speed-bar{height:32px;}
+  .bottom-nav{height:calc(44px + var(--safe-bottom));}
+  .stat-num{font-size:15px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- FA INTERLOCK BANNER -->
+<div class="fa-banner" id="faBanner">⚠ FIRE ALARM INTERLOCK — ALL FANS STOPPED — CONTACT FACILITY MANAGEMENT</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <svg class="logo-fan-svg" viewBox="0 0 24 24" fill="none">
+      <g transform="rotate(0,12,12)">  <path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(72,12,12)"> <path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(144,12,12)"><path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(216,12,12)"><path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(288,12,12)"><path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <circle cx="12" cy="12" r="2.5" fill="#1d2b3a"/>
+      <circle cx="12" cy="12" r="1.2" fill="#0071e3"/>
+    </svg>
+    <div class="logo-text">Fan<span>OS</span></div>
+    <div class="logo-badge">PRO</div>
+  </div>
+  <div class="t-div"></div>
+  <div class="topbar-site">
+    <div class="site-name">Acme Manufacturing</div>
+    <div class="site-loc">Main Warehouse</div>
+  </div>
+  <div class="topbar-right">
+    <div class="power-badge" id="powerBadge">
+      <span class="power-badge-icon">⚡</span>
+      <span id="totalPower">42.6 kW</span>
+    </div>
+    <div class="status-pill"><div class="sdot"></div><span>Normal</span></div>
+    <div class="topbar-clock" id="clock"><div>9:18 AM</div><div class="topbar-clock-date">Thu May 21</div></div>
+    <div class="dark-toggle" id="darkToggle" onclick="toggleDark()">🌙</div>
+  </div>
+</div>
+
+<!-- CTRL BAR -->
+<div class="ctrl-bar">
+  <div class="stat-group">
+    <div class="stat-item" id="statRunItem" onclick="openFaultModal('running')">
+      <div class="stat-dot" style="background:var(--green)"></div>
+      <div><div class="stat-num" id="cnt-run" style="color:var(--green)">18</div><div class="stat-lbl">Run</div></div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item" onclick="openFaultModal('stopped')">
+      <div class="stat-dot" style="background:var(--grey)"></div>
+      <div><div class="stat-num" id="cnt-stop" style="color:var(--navy-mid)">4</div><div class="stat-lbl">Stop</div></div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item has-fault" id="faultStatItem" onclick="openFaultModal('fault')">
+      <div class="stat-dot" style="background:var(--yellow)"></div>
+      <div><div class="stat-num" id="cnt-fault" style="color:var(--yellow)">1</div><div class="stat-lbl">Fault</div></div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item">
+      <div class="stat-dot" style="background:var(--blue)"></div>
+      <div><div class="stat-num" id="temp-top" style="color:var(--blue)">77°F</div><div class="stat-lbl">Temp</div></div>
+    </div>
+  </div>
+
+  <div class="global-btns">
+    <button class="g-btn g-btn-on" onclick="allFansOn()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>All ON
+    </button>
+    <button class="g-btn g-btn-off" onclick="allFansOff()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>All OFF
+    </button>
+  </div>
+
+  <div class="zone-dropdown-wrap">
+    <select class="zone-dropdown" id="zoneDropdown" onchange="filterZone(this.value)">
+      <option value="all">All Zones</option>
+      <option value="Zone A">Zone A</option>
+      <option value="Zone B">Zone B</option>
+      <option value="Zone C">Zone C</option>
+    </select>
+  </div>
+</div>
+
+<!-- SPEED BAR — scrollable -->
+<div class="speed-bar" id="speedBar">
+  <span class="sb-label">Speed</span>
+  <div class="sb-divider"></div>
+
+  <div class="sb-group">
+    <span class="sb-group-lbl">All</span>
+    <button class="spd-btn lo" onclick="setZoneSpeed(33,'all',this)">Low</button>
+    <button class="spd-btn md" onclick="setZoneSpeed(65,'all',this)">Med</button>
+    <button class="spd-btn hi" onclick="setZoneSpeed(100,'all',this)">High</button>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-group-lbl" style="color:#28c840">Zone A</span>
+    <button class="spd-btn lo" onclick="setZoneSpeed(33,'Zone A',this)">Low</button>
+    <button class="spd-btn md" onclick="setZoneSpeed(65,'Zone A',this)">Med</button>
+    <button class="spd-btn hi" onclick="setZoneSpeed(100,'Zone A',this)">High</button>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-group-lbl" style="color:#e6ac00">Zone B</span>
+    <button class="spd-btn lo" onclick="setZoneSpeed(33,'Zone B',this)">Low</button>
+    <button class="spd-btn md" onclick="setZoneSpeed(65,'Zone B',this)">Med</button>
+    <button class="spd-btn hi" onclick="setZoneSpeed(100,'Zone B',this)">High</button>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="sb-group">
+    <span class="sb-group-lbl" style="color:#0071e3">Zone C</span>
+    <button class="spd-btn lo" onclick="setZoneSpeed(33,'Zone C',this)">Low</button>
+    <button class="spd-btn md" onclick="setZoneSpeed(65,'Zone C',this)">Med</button>
+    <button class="spd-btn hi" onclick="setZoneSpeed(100,'Zone C',this)">High</button>
+  </div>
+  <div class="sb-divider"></div>
+  <!-- Type-specific controls -->
+  <div class="type-btns">
+    <span class="sb-group-lbl">HVLS</span>
+    <button class="type-btn on-btn"  onclick="typeCommand('hvls','on')">ON</button>
+    <button class="type-btn off-btn" onclick="typeCommand('hvls','off')">OFF</button>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="type-btns">
+    <span class="sb-group-lbl">Barrel</span>
+    <button class="type-btn on-btn"  onclick="typeCommand('barrel','on')">ON</button>
+    <button class="type-btn off-btn" onclick="typeCommand('barrel','off')">OFF</button>
+  </div>
+  <div class="sb-divider"></div>
+  <div class="type-btns">
+    <span class="sb-group-lbl">Exhaust</span>
+    <button class="type-btn on-btn"  onclick="typeCommand('exhaust','on')">ON</button>
+    <button class="type-btn off-btn" onclick="typeCommand('exhaust','off')">OFF</button>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+<div class="floorplan" id="fp">
+
+  <!-- Zone overlay border -->
+  <div class="zone-overlay" id="zoneOverlay"></div>
+
+  <!-- Edit mode banner -->
+  <div class="edit-mode-banner" id="editBanner">
+    ✏ Edit Mode — Drag fans to reposition · Tap outside to exit
+  </div>
+
+  <!-- Building SVG -->
+  <svg class="fp-svg" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet">
+    <rect x="55" y="25" width="890" height="570" rx="4"
+          fill="rgba(29,43,58,0.016)" stroke="rgba(29,43,58,0.18)" stroke-width="2"/>
+    <rect x="55" y="520" width="890" height="75"
+          fill="rgba(29,43,58,0.01)" stroke="rgba(29,43,58,0.1)" stroke-width="1" stroke-dasharray="7,4"/>
+    <text x="500" y="290" text-anchor="middle" font-family="DM Sans,sans-serif"
+          font-size="11" fill="rgba(29,43,58,0.06)" letter-spacing="4" font-weight="700">ZONE A — MAIN WAREHOUSE</text>
+    <text x="500" y="558" text-anchor="middle" font-family="DM Sans,sans-serif"
+          font-size="9" fill="rgba(29,43,58,0.07)" letter-spacing="3" font-weight="700">ZONE B — LOADING DOCK</text>
+    <circle cx="220" cy="185" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="220" cy="430" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="500" cy="185" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="500" cy="430" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="780" cy="185" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="780" cy="430" r="5" fill="rgba(29,43,58,0.07)"/>
+  </svg>
+
+  <!-- HVLS -->
+  <div class="dev" data-id="HVLS-01" data-type="hvls" style="left:17%;top:20%"></div>
+  <div class="dev" data-id="HVLS-02" data-type="hvls" style="left:29%;top:20%"></div>
+  <div class="dev selected" data-id="HVLS-03" data-type="hvls" style="left:41%;top:20%"></div>
+  <div class="dev" data-id="HVLS-04" data-type="hvls" style="left:55%;top:20%"></div>
+  <div class="dev" data-id="HVLS-05" data-type="hvls" style="left:69%;top:20%"></div>
+  <div class="dev" data-id="HVLS-06" data-type="hvls" style="left:17%;top:43%"></div>
+  <div class="dev" data-id="HVLS-07" data-type="hvls" style="left:29%;top:43%"></div>
+  <div class="dev" data-id="HVLS-08" data-type="hvls" style="left:41%;top:43%"></div>
+  <div class="dev" data-id="HVLS-09" data-type="hvls" style="left:55%;top:43%"></div>
+  <div class="dev" data-id="HVLS-10" data-type="hvls" style="left:69%;top:43%"></div>
+  <div class="dev" data-id="HVLS-11" data-type="hvls" style="left:17%;top:66%"></div>
+  <div class="dev" data-id="HVLS-12" data-type="hvls" style="left:29%;top:66%"></div>
+  <div class="dev" data-id="HVLS-13" data-type="hvls" style="left:41%;top:66%"></div>
+  <div class="dev" data-id="HVLS-14" data-type="hvls" style="left:55%;top:66%"></div>
+  <div class="dev" data-id="HVLS-15" data-type="hvls" style="left:69%;top:66%"></div>
+  <!-- Barrel -->
+  <div class="dev" data-id="Barrel-L1" data-type="barrel" style="left:8%;top:28%"></div>
+  <div class="dev" data-id="Barrel-L2" data-type="barrel" style="left:8%;top:55%"></div>
+  <div class="dev" data-id="Barrel-R1" data-type="barrel" style="left:83%;top:28%"></div>
+  <div class="dev" data-id="Barrel-R2" data-type="barrel" style="left:83%;top:55%"></div>
+  <div class="dev" data-id="Barrel-D1" data-type="barrel" style="left:30%;top:86%"></div>
+  <div class="dev" data-id="Barrel-D2" data-type="barrel" style="left:55%;top:86%"></div>
+  <!-- Wall exhaust -->
+  <div class="dev" data-id="WExh-L1" data-type="wallexh" style="left:5%;top:15%"></div>
+  <div class="dev" data-id="WExh-L2" data-type="wallexh" style="left:5%;top:70%"></div>
+  <div class="dev" data-id="WExh-R1" data-type="wallexh" style="left:95%;top:15%"></div>
+  <div class="dev" data-id="WExh-R2" data-type="wallexh" style="left:95%;top:70%"></div>
+  <!-- Roof exhaust -->
+  <div class="dev" data-id="RExh-01" data-type="roofexh" style="left:22%;top:7%"></div>
+  <div class="dev" data-id="RExh-02" data-type="roofexh" style="left:38%;top:7%"></div>
+  <div class="dev" data-id="RExh-03" data-type="roofexh" style="left:55%;top:7%"></div>
+  <div class="dev" data-id="RExh-04" data-type="roofexh" style="left:72%;top:7%"></div>
+  <div class="dev" data-id="RExh-05" data-type="roofexh" style="left:22%;top:35%"></div>
+  <div class="dev" data-id="RExh-06" data-type="roofexh" style="left:55%;top:35%"></div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Running</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--grey)"></div>Stopped</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Fault</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>E-Stop</div>
+  </div>
+</div><!-- /floorplan -->
+
+<!-- DETAIL PANEL -->
+<div class="detail" id="detail">
+  <div class="detail-inner">
+    <div style="position:relative;">
+      <div class="det-name" id="det-name">HVLS-03</div>
+      <div class="det-zone" id="det-zone">Zone A — Warehouse</div>
+      <div class="voltage-badge" id="det-voltage">480V · 3Ph · Invertek E3</div>
+      <div class="det-close" onclick="closeDetail()">✕</div>
+    </div>
+    <div class="det-status running" id="det-sc">
+      <div class="det-sdot" id="det-sdot" style="background:var(--green)"></div>
+      <div class="det-slbl running" id="det-slbl">Running</div>
+    </div>
+    <div class="speed-big" id="det-speed">65<span class="speed-unit">%</span></div>
+    <div class="speed-hz" id="det-hz">35.8 Hz</div>
+    <div class="speed-track" id="speedTrack" onclick="clickTrack(event,this)">
+      <div class="speed-fill" id="spd-fill" style="width:65%"></div>
+    </div>
+    <div class="speed-range"><span>0</span><span>100%</span></div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="setPreset(33,this)">Low</button>
+      <button class="preset-btn active" onclick="setPreset(65,this)">Mid</button>
+      <button class="preset-btn" onclick="setPreset(100,this)">High</button>
+    </div>
+    <div class="det-sec-lbl" id="dir-lbl">Direction</div>
+    <div class="dir-row" id="dir-row">
+      <button class="dir-btn active" id="dir-fwd" onclick="setDir('fwd')">↻ Forward</button>
+      <button class="dir-btn" id="dir-rev" onclick="setDir('rev')">↺ Reverse</button>
+    </div>
+    <div class="det-sec-lbl">Live Data</div>
+    <div class="data-row"><span class="dr-lbl">Output Hz</span><span class="dr-val" id="d-hz">35.8 Hz</span></div>
+    <div class="data-row"><span class="dr-lbl">Voltage</span><span class="dr-val" id="d-volt">480V 3Ph</span></div>
+    <div class="data-row"><span class="dr-lbl">Current</span><span class="dr-val" id="d-amps">3.4 A</span></div>
+    <div class="data-row"><span class="dr-lbl">Power</span><span class="dr-val" id="d-kw">2.3 kW</span></div>
+    <div class="data-row"><span class="dr-lbl">Temp Nearby</span><span class="dr-val" id="d-temp">76°F</span></div>
+    <div class="data-row"><span class="dr-lbl">Run Time</span><span class="dr-val" id="d-rt">6.2 hrs</span></div>
+    <div class="data-row"><span class="dr-lbl">Last Fault</span><span class="dr-val ok" id="d-fault">None</span></div>
+    <div class="det-sec-lbl">Device</div>
+    <div class="data-row"><span class="dr-lbl">Modbus Addr</span><span class="dr-val" id="d-addr">3</span></div>
+    <div class="data-row"><span class="dr-lbl">VFD Model</span><span class="dr-val" id="d-vfd">Invertek E3</span></div>
+    <div class="data-row"><span class="dr-lbl">Input Voltage</span><span class="dr-val" id="d-voltrow">480V 3Ph</span></div>
+    <div class="data-row"><span class="dr-lbl">Type</span><span class="dr-val" id="d-type">HVLS Fan</span></div>
+    <div class="det-actions">
+      <button class="det-btn det-btn-start" onclick="detStart()">Start</button>
+      <button class="det-btn det-btn-stop"  onclick="detStop()">Stop</button>
+    </div>
+    <div id="fault-wrap" style="display:none">
+      <button class="fault-btn" onclick="resetFault()">⚡ Reset Fault</button>
+    </div>
+  </div>
+</div>
+</div><!-- /body -->
+
+<!-- FAULT LIST MODAL -->
+<div class="modal-overlay" id="faultModal" onclick="closeFaultModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Active Faults</div>
+      <div class="modal-close" onclick="closeFaultModal()">✕</div>
+    </div>
+    <div id="faultList"></div>
+  </div>
+</div>
+
+<!-- STAGGER TOAST -->
+<div class="start-toast" id="startToast">
+  <div class="toast-icon">⚡</div>
+  <div class="toast-body">
+    <div class="toast-title" id="toastTitle">Starting motors…</div>
+    <div class="toast-sub" id="toastSub">Staggered start — 8s between motors</div>
+    <div class="toast-prog"><div class="toast-prog-fill" id="toastProg" style="width:0%"></div></div>
+  </div>
+  <div class="toast-cancel" onclick="cancelStagger()">Cancel</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-item active" id="bnav-dash" onclick="bnav(this,'dash')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+  <button class="bnav-item" id="bnav-zones" onclick="bnav(this,'zones')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Zones
+  </button>
+  <button class="bnav-item" id="bnav-edit" onclick="toggleEditMode()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    Edit Map
+  </button>
+  <button class="bnav-item" id="bnav-sched" onclick="bnav(this,'sched')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Schedule
+  </button>
+  <button class="bnav-item" id="bnav-settings" onclick="bnav(this,'settings')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    Settings
+  </button>
+</div>
+</div><!-- /app -->
+
+<script>
+// ---------------------------------------------------
+// FANOS PRO - DASHBOARD SCRIPT
+// Clean rewrite. Helpers defined first. No stale refs.
+// ---------------------------------------------------
+
+// -- HELPER FUNCTIONS - defined first, used everywhere ----------
+function g(id)          { return document.getElementById(id); }
+function setText(id,v)  { var e=g(id); if(e) e.textContent=String(v); }
+function setHTML(id,v)  { var e=g(id); if(e) e.innerHTML=v; }
+function setStyle(id,p,v){ var e=g(id); if(e) e.style[p]=v; }
+function setClass(id,v) { var e=g(id); if(e) e.className=v; }
+
+// -- DEVICE DATABASE --------------------------------------------
+var DB = {
+  'HVLS-01' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:75,rt:6.1,addr:1, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-02' :{type:'hvls',s:72,tgt:72,st:'running',fault:'None',t:76,rt:6.5,addr:2, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-03' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:3, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-04' :{type:'hvls',s:58,tgt:58,st:'running',fault:'None',t:75,rt:5.8,addr:4, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-05' :{type:'hvls',s:80,tgt:80,st:'running',fault:'None',t:78,rt:6.2,addr:5, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-06' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:6, vfd:'Schneider ATV320',zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-07' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:77,rt:6.2,addr:7, vfd:'Schneider ATV320',zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-08' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:8, vfd:'Yaskawa V1000',  zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-09' :{type:'hvls',s:0, tgt:65,st:'stopped',fault:'None',t:75,rt:0,  addr:9, vfd:'Yaskawa V1000',  zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-10' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:10,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-11' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:11,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-12' :{type:'hvls',s:0, tgt:65,st:'fault',  fault:'E07 Overload',t:77,rt:3.2,addr:12,vfd:'Invertek E3',zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-13' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:13,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-14' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:14,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'HVLS-15' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:15,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd'},
+  'Barrel-L1':{type:'barrel',s:70,tgt:70,st:'running',fault:'None',t:76,rt:5.8,addr:16,vfd:'Relay',zone:'Zone A',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5},
+  'Barrel-L2':{type:'barrel',s:70,tgt:70,st:'running',fault:'None',t:77,rt:5.8,addr:17,vfd:'Relay',zone:'Zone A',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5},
+  'Barrel-R1':{type:'barrel',s:60,tgt:60,st:'running',fault:'None',t:76,rt:5.5,addr:18,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:3.2,maxKW:0.7},
+  'Barrel-R2':{type:'barrel',s:0, tgt:60,st:'stopped',fault:'None',t:75,rt:0,  addr:19,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:3.2,maxKW:0.7},
+  'Barrel-D1':{type:'barrel',s:65,tgt:65,st:'running',fault:'None',t:72,rt:5.0,addr:20,vfd:'Relay',zone:'Zone B',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5},
+  'Barrel-D2':{type:'barrel',s:65,tgt:65,st:'running',fault:'None',t:72,rt:5.0,addr:21,vfd:'Relay',zone:'Zone B',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5},
+  'WExh-L1'  :{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:22,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8},
+  'WExh-L2'  :{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:23,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8},
+  'WExh-R1'  :{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:24,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8},
+  'WExh-R2'  :{type:'wallexh',s:0,  tgt:100,st:'fault',  fault:'E03 Overcurrent',t:79,rt:2.1,addr:25,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8},
+  'RExh-01'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:82,rt:8.0,addr:26,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2},
+  'RExh-02'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:27,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2},
+  'RExh-03'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:28,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2},
+  'RExh-04'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:82,rt:8.0,addr:29,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2},
+  'RExh-05'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:30,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2},
+  'RExh-06'  :{type:'roofexh',s:0,  tgt:100,st:'stopped',fault:'None',t:80,rt:0,  addr:31,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2}
+};
+
+var typeLabel = {hvls:'HVLS Fan',barrel:'Barrel / Basket Fan',wallexh:'Wall Exhaust',roofexh:'Roof Exhaust'};
+var ST_COL = {running:'#28c840',stopped:'#b0bec5',fault:'#e6ac00',estop:'#ff3b30',ramping:'#0071e3',reversing:'#0071e3'};
+function col(st){ return ST_COL[st]||'#b0bec5'; }
+function hubCol(c){ return {'#28c840':'#1a8a35','#e6ac00':'#9a7000','#ff3b30':'#c0281e','#0071e3':'#004fb3','#b0bec5':'#8a9ab0'}[c]||'#8a9ab0'; }
+
+// -- POWER SCALING ----------------------------------------------
+function liveAmps(d){ if(!d||d.s<=0)return 0; return +(d.maxA*Math.pow(d.s/100,1.5)).toFixed(1); }
+function liveKW(d)  { if(!d||d.s<=0)return 0; return +(d.maxKW*Math.pow(d.s/100,2.5)).toFixed(2); }
+function liveHz(d)  { if(!d)return 0; return +(d.s/100*55).toFixed(1); }
+
+function calcTotalPower(){
+  var kw=0;
+  Object.keys(DB).forEach(function(k){ var d=DB[k]; if(d&&d.s>0) kw+=liveKW(d); });
+  setText('totalPower', kw.toFixed(1)+' kW');
+}
+
+// -- RAF ROTATION -----------------------------------------------
+// rotors[id].el = the .dev-icon-wrap div. CSS transform rotates it.
+// No IDs inside SVGs. No stale references.
+var rotors = {};
+var lastTime = null;
+var MAX_DEG = 1080;
+
+function rafLoop(ts){
+  if(!lastTime) lastTime=ts;
+  var dt = Math.min((ts-lastTime)/1000, 0.05);
+  lastTime = ts;
+  var ids = Object.keys(rotors);
+  for(var i=0;i<ids.length;i++){
+    var id=ids[i], r=rotors[id], d=DB[id];
+    if(!r||!d||!r.el||!r.el.style) continue;
+    var spd = d.s/100;
+    var deg = spd * MAX_DEG * (d.dir==='rev'?-1:1);
+    r.angle = (r.angle + deg*dt) % 360;
+    r.el.style.transform = 'rotate('+r.angle.toFixed(1)+'deg)';
+  }
+  requestAnimationFrame(rafLoop);
+}
+requestAnimationFrame(rafLoop);
+
+// -- SVG BUILDERS - NO IDs inside SVG, no stale refs -----------
+function makeSVG(id){
+  var d=DB[id]; if(!d) return '';
+  var c=col(d.st), hc=hubCol(c);
+  var bl, sp;
+  if(d.type==='hvls'){
+    bl=[0,72,144,216,288].map(function(a){
+      return '<g transform="rotate('+a+',20,20)"><rect x="18.5" y="3" width="3" height="14" rx="1.2" fill="'+c+'"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 40 40" width="44" height="44">'+bl+
+           '<circle cx="20" cy="20" r="4" fill="'+hc+'"/>'+
+           '<circle cx="20" cy="20" r="1.8" fill="rgba(255,255,255,0.5)"/></svg>';
+  }
+  if(d.type==='barrel'){
+    sp=[0,60,120,180,240,300].map(function(a){
+      return '<line x1="16" y1="16" x2="'+(16+13*Math.cos(a*Math.PI/180)).toFixed(1)+'" y2="'+(16+13*Math.sin(a*Math.PI/180)).toFixed(1)+'" stroke="'+c+'" stroke-width="0.7" opacity="0.3"/>';
+    }).join('');
+    bl=[0,90,180,270].map(function(a){
+      return '<g transform="rotate('+a+',16,16)"><path d="M16 16 L14.5 5 Q16 3.5 17.5 5 Z" fill="'+c+'"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 32 32" width="32" height="32">'+
+           '<circle cx="16" cy="16" r="14.5" fill="none" stroke="'+c+'" stroke-width="2.5" opacity="0.55"/>'+
+           '<circle cx="16" cy="16" r="10" fill="none" stroke="'+c+'" stroke-width="0.8" opacity="0.18"/>'+
+           sp+bl+
+           '<circle cx="16" cy="16" r="3.5" fill="'+hc+'"/>'+
+           '<circle cx="16" cy="16" r="1.6" fill="rgba(255,255,255,0.55)"/></svg>';
+  }
+  if(d.type==='wallexh'){
+    bl=[0,90,180,270].map(function(a){
+      return '<g transform="rotate('+a+',15,15)"><path d="M15 15 L13.8 6 Q15 4.8 16.2 6 Z" fill="'+c+'"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 30 30" width="28" height="28">'+
+           '<rect x="1" y="1" width="28" height="28" rx="3" fill="none" stroke="'+c+'" stroke-width="2" opacity="0.5"/>'+
+           '<line x1="1" y1="8" x2="29" y2="8" stroke="'+c+'" stroke-width="0.7" opacity="0.22"/>'+
+           '<line x1="1" y1="15" x2="29" y2="15" stroke="'+c+'" stroke-width="0.7" opacity="0.22"/>'+
+           '<line x1="1" y1="22" x2="29" y2="22" stroke="'+c+'" stroke-width="0.7" opacity="0.22"/>'+
+           bl+
+           '<circle cx="15" cy="15" r="3" fill="'+hc+'"/>'+
+           '<circle cx="15" cy="15" r="1.4" fill="rgba(255,255,255,0.5)"/></svg>';
+  }
+  if(d.type==='roofexh'){
+    bl=[0,60,120,180,240,300].map(function(a){
+      return '<g transform="rotate('+a+',16,16)"><path d="M16 16 Q20 11 18 7" stroke="'+c+'" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 32 32" width="30" height="30">'+
+           '<rect x="1" y="1" width="30" height="30" rx="4" fill="none" stroke="'+c+'" stroke-width="1.8" opacity="0.38"/>'+
+           '<circle cx="16" cy="16" r="13" fill="none" stroke="'+c+'" stroke-width="1.2" opacity="0.32"/>'+
+           bl+
+           '<circle cx="16" cy="16" r="3.8" fill="'+hc+'"/>'+
+           '<circle cx="16" cy="16" r="1.8" fill="rgba(255,255,255,0.5)"/></svg>';
+  }
+  return '';
+}
+
+function makeLblSt(d){
+  if(!d) return '';
+  if(d.s>0&&(d.st==='running'||d.st==='ramping'||d.st==='reversing')) return liveHz(d).toFixed(1)+' Hz';
+  return {running:'Running',stopped:'Stopped',fault:'Fault',estop:'E-Stop',ramping:'Ramping...',reversing:'Reversing...'}[d.st]||d.st;
+}
+
+// Build all fan nodes. Called once on load.
+function buildAllNodes(){
+  var nodes = document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++){
+    (function(el){
+      var id = el.dataset.id;
+      var d  = DB[id];
+      if(!d) return;
+      var c = col(d.st);
+      // Build inner HTML - wrap div gets CSS rotated by RAF
+      el.innerHTML =
+        '<div class="dev-icon-wrap">'+makeSVG(id)+'</div>'+
+        '<div class="dev-lbl-id">'+id+'</div>'+
+        '<div class="dev-lbl-st" style="color:'+c+'" id="lst_'+id.replace(/\W/g,'_')+'">'+makeLblSt(d)+'</div>';
+      // Store reference to the wrapper div for RAF
+      var wrap = el.querySelector('.dev-icon-wrap');
+      var svgEl = wrap ? wrap.querySelector('svg') : null;
+      rotors[id] = {el: svgEl||wrap, angle: Math.random()*360};
+      // Single click/tap handler
+      el.addEventListener('click', function(){ if(!editMode) selectDev(id); });
+    })(nodes[i]);
+  }
+  setupDrag();
+}
+
+// Update a device's icon and label after state change.
+// Rebuilds SVG inside the wrapper (no IDs in SVG = no duplicates).
+// Re-points RAF rotor to the (same) wrapper div.
+function updateColor(id){
+  var d = DB[id]; if(!d) return;
+  var c = col(d.st);
+  var rid = id.replace(/\W/g,'_');
+  // Update the icon
+  var devNode = document.querySelector('.dev[data-id="'+id+'"]');
+  if(devNode){
+    var wrap = devNode.querySelector('.dev-icon-wrap');
+    if(wrap){
+      wrap.innerHTML = makeSVG(id);
+      var newSvg = wrap.querySelector('svg');
+      if(rotors[id]) rotors[id].el = newSvg || wrap;
+    }
+    devNode.classList.toggle('estop', d.st==='estop');
+  }
+  // Update status label
+  var lbl = g('lst_'+rid);
+  if(lbl){ lbl.style.color=c; lbl.textContent=makeLblSt(d); }
+}
+
+// -- RAMP ENGINE ------------------------------------------------
+var STEP = 1.8;  // % per 200ms -> ~12s full range
+var rampTimers = {};
+
+function startRamp(id){
+  if(rampTimers[id]) clearInterval(rampTimers[id]);
+  var d = DB[id];
+  rampTimers[id] = setInterval(function(){
+    var diff = d.tgt - d.s;
+    if(Math.abs(diff) < STEP){
+      d.s = d.tgt;
+      d.st = (d.s===0) ? 'stopped' : 'running';
+      clearInterval(rampTimers[id]); delete rampTimers[id];
+    } else {
+      d.s += (diff>0) ? STEP : -STEP;
+      d.s = Math.max(0, Math.min(100, d.s));
+      d.st = (d.s>0) ? 'ramping' : 'stopped';
+    }
+    updateColor(id);
+    if(sel===id) refreshDetailLive();
+    updateCounts();
+    calcTotalPower();
+  }, 200);
+}
+
+function rampTo(id, tgt){
+  var d=DB[id]; if(!d) return;
+  d.tgt = tgt;
+  if(tgt>0 && d.st==='stopped') d.st='ramping';
+  startRamp(id);
+}
+
+// Reverse: ramp to 0, flip dir, ramp back up
+function startReverse(id){
+  var d=DB[id]; if(!d||d.type!=='hvls') return;
+  var prevTgt = d.tgt||65;
+  if(rampTimers[id]) clearInterval(rampTimers[id]);
+  d.st='reversing'; d.tgt=0;
+  var phase=1;
+  rampTimers[id]=setInterval(function(){
+    if(phase===1){
+      d.s = Math.max(0, d.s-STEP);
+      d.st = 'reversing';
+      if(d.s<=0){ d.dir=(d.dir==='fwd'?'rev':'fwd'); d.tgt=prevTgt; phase=2; }
+    } else {
+      var diff=d.tgt-d.s;
+      if(Math.abs(diff)<STEP){
+        d.s=d.tgt; d.st='running';
+        clearInterval(rampTimers[id]); delete rampTimers[id];
+      } else {
+        d.s=Math.min(100,d.s+STEP); d.st='reversing';
+      }
+    }
+    updateColor(id);
+    if(sel===id) refreshDetailLive();
+    updateCounts(); calcTotalPower();
+  }, 200);
+}
+
+// -- SELECTION --------------------------------------------------
+var sel = 'HVLS-03';
+
+function selectDev(id){
+  var d=DB[id]; if(!d) return;
+  sel = id;
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++) nodes[i].classList.remove('selected');
+  var el=document.querySelector('.dev[data-id="'+id+'"]');
+  if(el) el.classList.add('selected');
+  var det=g('detail'); if(det) det.classList.add('open');
+  refreshDetail(id);
+}
+
+function refreshDetail(id){
+  var d=DB[id]; if(!d) return;
+  var isHvls=(d.type==='hvls');
+  setText('det-name', id);
+  setText('det-zone', d.zone+' - Warehouse');
+  setText('det-voltage', d.volt+' '+d.phase+' - '+d.vfd);
+  setText('d-addr', String(d.addr));
+  setText('d-vfd', d.vfd);
+  setText('d-type', typeLabel[d.type]||d.type);
+  setText('d-volt', d.volt+' '+d.phase);
+  setText('d-voltrow', d.volt+' '+d.phase);
+  setText('d-temp', d.t+'-F');
+  setText('d-rt', d.rt.toFixed(1)+' hrs');
+  var dr=g('dir-row'); if(dr) dr.style.display=isHvls?'flex':'none';
+  var dl=g('dir-lbl'); if(dl) dl.style.display=isHvls?'block':'none';
+  if(isHvls){
+    var df=g('dir-fwd'); if(df) df.classList.toggle('active', d.dir!=='rev');
+    var dv=g('dir-rev'); if(dv) dv.classList.toggle('active', d.dir==='rev');
+  }
+  refreshDetailLive();
+}
+
+function refreshDetailLive(){
+  var d=DB[sel]; if(!d) return;
+  var pct=Math.round(d.s);
+  var hz=liveHz(d), a=liveAmps(d), kw=liveKW(d);
+  setHTML('det-speed', pct+'<span class="speed-unit">%</span>');
+  setText('det-hz', hz.toFixed(1)+' Hz');
+  setStyle('spd-fill','width',pct+'%');
+  setText('d-hz', hz.toFixed(1)+' Hz');
+  setText('d-amps', a.toFixed(1)+' A');
+  setText('d-kw', kw.toFixed(2)+' kW');
+  var fe=g('d-fault');
+  if(fe){ fe.textContent=d.fault||'None'; fe.className='dr-val '+(d.fault&&d.fault!=='None'?'warn':'ok'); }
+  var stMap={
+    running:['#28c840','Running'], stopped:['#b0bec5','Stopped'],
+    ramping:['#0071e3','Ramping...'], reversing:['#0071e3','Reversing...'],
+    fault:['#e6ac00','Fault'], estop:['#ff3b30','E-Stop']
+  };
+  var sc=stMap[d.st]||stMap.stopped, c=sc[0], lbl=sc[1];
+  setClass('det-sc', 'det-status '+(d.st==='reversing'?'reversing':d.st));
+  setClass('det-slbl', 'det-slbl '+(d.st==='reversing'?'reversing':d.st));
+  setText('det-slbl', lbl);
+  setStyle('det-sdot','background',c);
+  var fw=g('fault-wrap'); if(fw) fw.style.display=(d.st==='fault'?'block':'none');
+}
+
+function closeDetail(){
+  var det=g('detail'); if(det) det.classList.remove('open');
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++) nodes[i].classList.remove('selected');
+}
+
+// -- SPEED CONTROLS ---------------------------------------------
+var speedAcceptTimer=null;
+
+function clickTrack(e, bar){
+  var r=bar.getBoundingClientRect();
+  var pct=Math.min(100,Math.max(0,Math.round((e.clientX-r.left)/r.width*100)));
+  var fill=g('spd-fill'); if(!fill) return;
+  fill.style.width=pct+'%';
+  fill.classList.add('accepted');
+  setHTML('det-speed', pct+'<span class="speed-unit">%</span>');
+  setText('det-hz', (pct/100*55).toFixed(1)+' Hz');
+  if(speedAcceptTimer) clearTimeout(speedAcceptTimer);
+  speedAcceptTimer=setTimeout(function(){ fill.classList.remove('accepted'); rampTo(sel,pct); }, 800);
+}
+
+function setPreset(pct, btn){
+  var btns=document.querySelectorAll('.preset-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  if(btn&&btn.classList) btn.classList.add('active');
+  var fill=g('spd-fill'); if(!fill) return;
+  fill.style.width=pct+'%';
+  fill.classList.add('accepted');
+  setHTML('det-speed', pct+'<span class="speed-unit">%</span>');
+  if(speedAcceptTimer) clearTimeout(speedAcceptTimer);
+  speedAcceptTimer=setTimeout(function(){ fill.classList.remove('accepted'); rampTo(sel,pct); }, 800);
+}
+
+// -- DIRECTION --------------------------------------------------
+function setDir(dir){
+  var d=DB[sel]; if(!d||d.type!=='hvls') return;
+  if(dir===(d.dir||'fwd')) return;
+  var df=g('dir-fwd'); if(df) df.classList.toggle('active',dir==='fwd');
+  var dv=g('dir-rev'); if(dv) dv.classList.toggle('active',dir==='rev');
+  startReverse(sel);
+}
+
+// -- FAULT MODAL ------------------------------------------------
+function openFaultModal(filter){
+  var modal=g('faultModal'), list=g('faultList'), title=g('modalTitle');
+  if(!modal||!list||!title) return;
+  var entries=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    if(filter==='fault')   return d.st==='fault'||d.st==='estop';
+    if(filter==='running') return d.st==='running'||d.st==='ramping';
+    if(filter==='stopped') return d.st==='stopped';
+    return true;
+  });
+  var labels={fault:'Active Faults',running:'Running Devices',stopped:'Stopped Devices'};
+  title.textContent = labels[filter]||'Devices';
+  list.innerHTML = entries.length ? entries.map(function(id){
+    var d=DB[id];
+    return '<div class="fault-item" onclick="closeAndSelect(\''+id+'\')">'+
+      '<div class="fault-dot" style="background:'+col(d.st)+'"></div>'+
+      '<div><div class="fault-item-name">'+id+'</div>'+
+      '<div class="fault-item-code">'+(d.fault&&d.fault!=='None'?d.fault:d.st.toUpperCase())+'</div>'+
+      '<div class="fault-item-zone">'+typeLabel[d.type]+' - '+d.zone+'</div></div>'+
+      '<div class="fault-item-right">'+d.volt+' '+d.phase+'<br>'+d.vfd+'</div></div>';
+  }).join('') : '<div style="padding:20px;text-align:center;color:var(--navy-dim)">No devices</div>';
+  modal.classList.add('open');
+}
+function closeAndSelect(id){ closeFaultModal(); selectDev(id); }
+function closeFaultModal(e){
+  var modal=g('faultModal');
+  if(e&&e.target&&e.target!==modal) return;
+  if(modal) modal.classList.remove('open');
+}
+
+// -- DEVICE CONTROLS --------------------------------------------
+function detStart(){
+  var d=DB[sel]; if(!d||d.st==='fault'||d.st==='estop') return;
+  rampTo(sel, d.tgt||65);
+}
+function detStop(){
+  var d=DB[sel]; if(!d) return;
+  if(d.s>0) d.tgt=d.s;
+  rampTo(sel, 0);
+}
+function resetFault(){
+  var d=DB[sel]; if(!d) return;
+  d.st='stopped'; d.fault='None'; d.s=0; d.tgt=65;
+  updateColor(sel); refreshDetail(sel); updateCounts(); calcTotalPower();
+}
+
+function filterZone(zone){
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++){
+    var d=DB[nodes[i].dataset.id];
+    var match=(!d)||(zone==='all')||(d.zone===zone);
+    nodes[i].style.opacity=match?'1':'0.25';
+    nodes[i].style.pointerEvents=match?'auto':'none';
+  }
+}
+
+function typeCommand(typeGroup, cmd){
+  var types={hvls:['hvls'],barrel:['barrel'],exhaust:['wallexh','roofexh']};
+  var tlist=types[typeGroup]||[];
+  Object.keys(DB).forEach(function(id){
+    var d=DB[id];
+    if(!tlist.includes(d.type)||d.st==='fault'||d.st==='estop') return;
+    if(cmd==='on') rampTo(id, d.tgt||65);
+    else { if(d.s>0) d.tgt=d.s; rampTo(id, 0); }
+  });
+}
+
+function setZoneSpeed(pct, zone, btn){
+  if(btn){
+    var grp=btn.closest?btn.closest('.sb-group'):null;
+    if(grp){ var sb=grp.querySelectorAll('.spd-btn'); for(var i=0;i<sb.length;i++) sb[i].classList.remove('active'); }
+    btn.classList.add('active');
+  }
+  var ids=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    return d.st!=='fault'&&d.st!=='estop'&&(zone==='all'||d.zone===zone);
+  });
+  ids.forEach(function(id){ var d=DB[id]; if(d.st==='running'||d.st==='ramping') rampTo(id,pct); });
+  staggeredStart(ids, pct);
+}
+
+// -- STAGGERED START --------------------------------------------
+var STAGGER_DELAY=8000, staggerQ=[], staggerTimer=null, staggerTotal=0, staggerDone=0;
+
+function staggeredStart(ids, targetSpeed){
+  cancelStagger();
+  staggerQ=ids.filter(function(id){
+    var d=DB[id];
+    return d&&d.st!=='fault'&&d.st!=='estop'&&d.st!=='running'&&d.st!=='ramping';
+  });
+  if(!staggerQ.length){
+    if(targetSpeed!==null) ids.forEach(function(id){ var d=DB[id]; if(d&&(d.st==='running'||d.st==='ramping')) rampTo(id,targetSpeed); });
+    return;
+  }
+  staggerTotal=staggerQ.length; staggerDone=0;
+  showToast('Starting '+staggerTotal+' motor'+(staggerTotal>1?'s':''), '8s delay between starts', 0);
+  function fire(){
+    if(!staggerQ.length){
+      if(targetSpeed!==null) ids.forEach(function(id){ var d=DB[id]; if(d&&d.st==='running') rampTo(id,targetSpeed); });
+      showToast('All motors started','Sequence complete',100);
+      setTimeout(hideToast, 2500); return;
+    }
+    var id=staggerQ.shift(); staggerDone++;
+    var d=DB[id]; if(!d){fire();return;}
+    var tgt=(targetSpeed!==null)?targetSpeed:(d.tgt||65);
+    d.tgt=tgt; rampTo(id,tgt);
+    var pct=Math.round(staggerDone/staggerTotal*100);
+    showToast('Motor '+staggerDone+'/'+staggerTotal+' - '+id, '>> '+tgt+'% - Next in '+(STAGGER_DELAY/1000)+'s', pct);
+    staggerTimer=setTimeout(fire, staggerQ.length?STAGGER_DELAY:500);
+  }
+  fire();
+}
+function cancelStagger(){ if(staggerTimer){clearTimeout(staggerTimer);staggerTimer=null;} staggerQ=[]; hideToast(); }
+function showToast(t,s,p){
+  setText('toastTitle',t); setText('toastSub',s);
+  var tp=g('toastProg'); if(tp) tp.style.width=p+'%';
+  var st=g('startToast'); if(st) st.classList.add('visible');
+}
+function hideToast(){ var st=g('startToast'); if(st) st.classList.remove('visible'); }
+
+function allFansOn(){ staggeredStart(Object.keys(DB), null); }
+function allFansOff(){
+  Object.keys(DB).forEach(function(id){
+    var d=DB[id]; if(!d||d.st==='fault'||d.st==='estop') return;
+    if(d.s>0) d.tgt=d.s;
+    rampTo(id, 0);
+  });
+}
+
+function updateCounts(){
+  var vals=Object.keys(DB).map(function(k){return DB[k];});
+  setText('cnt-run',  String(vals.filter(function(d){return d.st==='running'||d.st==='ramping'||d.st==='reversing';}).length));
+  setText('cnt-stop', String(vals.filter(function(d){return d.st==='stopped';}).length));
+  var faults=vals.filter(function(d){return d.st==='fault'||d.st==='estop';}).length;
+  setText('cnt-fault', String(faults));
+  var fi=g('faultStatItem'); if(fi) fi.classList.toggle('has-fault', faults>0);
+}
+
+// -- EDIT / DRAG MAP --------------------------------------------
+var editMode=false;
+function toggleEditMode(){
+  editMode=!editMode;
+  var fp=g('fp'); if(fp) fp.classList.toggle('edit-mode',editMode);
+  var eb=g('editBanner'); if(eb) eb.style.display=editMode?'block':'none';
+  var ne=g('bnav-edit'); if(ne) ne.classList.toggle('active',editMode);
+  setupDrag();
+}
+
+function setupDrag(){
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++){
+    nodes[i].removeEventListener('touchstart',onDragStart);
+    nodes[i].removeEventListener('mousedown',onDragStart);
+    if(editMode){
+      nodes[i].addEventListener('touchstart',onDragStart,{passive:false});
+      nodes[i].addEventListener('mousedown',onDragStart);
+    }
+  }
+}
+
+var dragEl=null;
+function onDragStart(e){
+  if(!editMode) return;
+  e.preventDefault();
+  dragEl=e.currentTarget||e.target;
+  if(!dragEl) return;
+  dragEl.classList.add('dragging');
+  var fp=g('fp'); if(!fp) return;
+  var fpR=fp.getBoundingClientRect();
+  var t=e.touches?e.touches[0]:e;
+  var elR=dragEl.getBoundingClientRect();
+  var ox=t.clientX-elR.left-elR.width/2;
+  var oy=t.clientY-elR.top-elR.height/2;
+  var cap=dragEl;
+  function onMove(e2){
+    if(!cap) return;
+    var t2=e2.touches?e2.touches[0]:e2;
+    cap.style.left=Math.min(98,Math.max(2,(t2.clientX-fpR.left-ox)/fpR.width*100)).toFixed(1)+'%';
+    cap.style.top =Math.min(98,Math.max(2,(t2.clientY-fpR.top -oy)/fpR.height*100)).toFixed(1)+'%';
+  }
+  function onEnd(){
+    if(cap) cap.classList.remove('dragging');
+    dragEl=null;
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('touchend',onEnd);
+    document.removeEventListener('mouseup',onEnd);
+  }
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchend',onEnd);
+  document.addEventListener('mouseup',onEnd);
+}
+
+// -- BOTTOM NAV -------------------------------------------------
+function bnav(btn, tab){
+  var items=document.querySelectorAll('.bnav-item');
+  for(var i=0;i<items.length;i++) items[i].classList.remove('active');
+  if(btn) btn.classList.add('active');
+  if(tab==='zones'){ var sb=g('speedBar'); if(sb&&sb.scrollTo) sb.scrollTo({left:120,behavior:'smooth'}); }
+}
+
+// -- DARK MODE --------------------------------------------------
+function toggleDark(){
+  var html=document.documentElement;
+  var dark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme', dark?'light':'dark');
+  setText('darkToggle', dark?'-':'--');
+}
+
+// -- CLOCK ------------------------------------------------------
+function tick(){
+  var n=new Date(), h=n.getHours(), m=n.getMinutes();
+  var ap=h>=12?'PM':'AM'; h=h%12||12;
+  var dy=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var ck=g('clock');
+  if(ck) ck.innerHTML='<div>'+h+':'+String(m).padStart(2,'0')+' '+ap+'</div>'+
+    '<div class="topbar-clock-date">'+dy[n.getDay()]+' '+mo[n.getMonth()]+' '+n.getDate()+'</div>';
+}
+tick();
+setInterval(tick, 15000);
+
+// Live data flicker
+setInterval(function(){
+  var d=DB[sel];
+  if(d&&(d.st==='running'||d.st==='ramping'||d.st==='reversing')&&d.s>0){
+    d.maxA=Math.max(0, +(d.maxA+(Math.random()-0.5)*0.05).toFixed(2));
+    setText('d-amps', liveAmps(d).toFixed(1)+' A');
+    setText('d-kw',   liveKW(d).toFixed(2)+' kW');
+  }
+  setText('temp-top', (77+Math.round((Math.random()-0.5)*2))+'-F');
+  calcTotalPower();
+}, 2000);
+
+// -- DEBUG -----------------------------------------------------
+window.debugFanOS = function(){
+  console.log('sel:', sel);
+  console.log('rotors:', Object.keys(rotors).length);
+  console.log('totalPower:', g('totalPower')&&g('totalPower').textContent);
+};
+
+// -- INIT -------------------------------------------------------
+buildAllNodes();
+updateCounts();
+calcTotalPower();
+selectDev('HVLS-03');
+
+</script>
+</body>
+</html>
