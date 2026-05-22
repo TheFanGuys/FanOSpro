@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FanOS Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f5f7; --surface:#ffffff; --surface2:#f9f9fb;
+  --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.05);
+  --navy:#1d2b3a; --navy-mid:#4a5f72; --navy-dim:#8a9ab0;
+  --fp-bg:#f7f8fa; --fp-dot:rgba(29,43,58,0.09); --lbl-bg:rgba(255,255,255,0.88);
+  --blue:#0071e3; --green:#28c840; --yellow:#e6ac00; --red:#ff3b30; --grey:#b0bec5;
+  --sans:'DM Sans',-apple-system,sans-serif; --mono:'DM Mono',monospace;
+}
+[data-theme="dark"] {
+  --bg:#111418; --surface:#1c2128; --surface2:#222830;
+  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.05);
+  --navy:#e8eef5; --navy-mid:#9aafc4; --navy-dim:#4a6070;
+  --fp-bg:#151a20; --fp-dot:rgba(200,220,255,0.06); --lbl-bg:rgba(28,33,40,0.9);
+  --blue:#4a9eff; --green:#30d158; --yellow:#ffd60a; --red:#ff453a; --grey:#4a6070;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--sans);color:var(--navy);transition:background 0.3s,color 0.3s;}
+.app{display:flex;flex-direction:column;height:100vh;}
+
+/* Logo fan uses CSS — it's decorative only, not a device */
+@keyframes logo-spin{to{transform:rotate(360deg);}}
+.logo-fan-svg{width:24px;height:24px;animation:logo-spin 5s linear infinite;transform-origin:center;}
+@keyframes sdot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(40,200,64,0.4);}50%{box-shadow:0 0 0 4px rgba(40,200,64,0.1);}}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;padding:0 14px;height:50px;gap:10px;
+  background:var(--surface);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);flex-shrink:0;z-index:200;transition:background 0.3s,border-color 0.3s;}
+.logo-wrap{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.logo-text{font-size:16px;font-weight:700;letter-spacing:-0.3px;color:var(--navy);}
+.logo-text span{color:var(--blue);}
+.logo-badge{font-size:9px;font-weight:700;background:var(--blue);color:#fff;padding:2px 5px;border-radius:4px;}
+.t-div{width:1px;height:28px;background:var(--border);flex-shrink:0;}
+.topbar-site{flex:1;min-width:0;}
+.site-name{font-size:13px;font-weight:600;color:var(--navy);}
+.site-loc{font-size:10px;color:var(--navy-dim);}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.status-pill{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#1a8a35;
+  background:#e6faea;border:1px solid rgba(40,200,64,0.25);border-radius:20px;padding:3px 9px 3px 6px;}
+[data-theme="dark"] .status-pill{color:#30d158;background:rgba(48,209,88,0.12);border-color:rgba(48,209,88,0.2);}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:sdot-pulse 2s ease-in-out infinite;}
+.topbar-clock{font-family:var(--mono);font-size:11px;color:var(--navy-mid);text-align:right;line-height:1.35;}
+.topbar-clock-date{font-size:9px;color:var(--navy-dim);}
+.dark-toggle{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;transition:all 0.15s;flex-shrink:0;}
+.dark-toggle:hover{border-color:var(--blue);}
+
+/* CTRL BAR */
+.ctrl-bar{display:flex;align-items:stretch;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;height:52px;transition:background 0.3s,border-color 0.3s;}
+.stat-item{display:flex;align-items:center;gap:6px;padding:0 12px;
+  border-right:1px solid var(--border);cursor:pointer;transition:background 0.1s;flex:1;min-width:0;}
+.stat-item:hover{background:var(--bg);}
+.stat-num{font-size:20px;font-weight:700;letter-spacing:-0.5px;line-height:1;}
+.stat-lbl{font-size:8px;font-weight:600;letter-spacing:0.5px;color:var(--navy-dim);text-transform:uppercase;margin-top:2px;}
+.stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.global-btns{display:flex;align-items:center;gap:6px;padding:0 10px;border-right:1px solid var(--border);flex-shrink:0;}
+.g-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:8px;border:none;
+  font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.g-btn-on{background:var(--green);color:#fff;}
+.g-btn-on:hover{filter:brightness(1.08);}
+.g-btn-off{background:rgba(255,59,48,0.1);color:var(--red);border:1px solid rgba(255,59,48,0.2);}
+.g-btn-off:hover{background:var(--red);color:#fff;}
+.zone-pills{display:flex;align-items:center;gap:5px;padding:0 10px;flex-shrink:0;}
+.zpill{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);
+  font-size:11px;font-weight:500;color:var(--navy-mid);cursor:pointer;white-space:nowrap;transition:all 0.12s;}
+.zpill:hover{border-color:var(--blue);color:var(--blue);}
+.zpill.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+/* SPEED BAR */
+.speed-bar{
+  display:flex;align-items:center;gap:0;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  flex-shrink:0;height:40px;padding:0 10px;gap:8px;
+  transition:background 0.3s,border-color 0.3s;
+}
+.sb-label{font-size:10px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;
+  color:var(--navy-dim);white-space:nowrap;flex-shrink:0;}
+.sb-divider{width:1px;height:22px;background:var(--border);flex-shrink:0;margin:0 4px;}
+.sb-group{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.sb-group-lbl{font-size:9px;font-weight:600;color:var(--navy-dim);letter-spacing:0.5px;white-space:nowrap;}
+.spd-btn{
+  padding:4px 11px;border-radius:6px;border:1px solid var(--border);
+  background:var(--surface);font-family:var(--sans);font-size:11px;font-weight:600;
+  color:var(--navy-mid);cursor:pointer;transition:all 0.12s;white-space:nowrap;
+}
+.spd-btn:hover{border-color:var(--blue);color:var(--blue);}
+.spd-btn.lo:hover,.spd-btn.lo.active {background:#e8f2fd;border-color:var(--blue);color:var(--blue);}
+.spd-btn.md:hover,.spd-btn.md.active {background:rgba(40,200,64,0.12);border-color:var(--green);color:var(--green);}
+.spd-btn.hi:hover,.spd-btn.hi.active {background:rgba(255,59,48,0.1);border-color:var(--red);color:var(--red);}
+
+/* START TOAST — staggered start progress */
+.start-toast{
+  position:fixed;bottom:66px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy);color:#fff;border-radius:12px;
+  padding:12px 18px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:1000;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.2s,transform 0.2s;min-width:260px;
+}
+[data-theme="dark"] .start-toast{background:var(--surface);border:1px solid var(--border);}
+.start-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.toast-icon{font-size:18px;flex-shrink:0;}
+.toast-body{flex:1;}
+.toast-title{font-size:12px;font-weight:600;color:#fff;line-height:1.2;}
+[data-theme="dark"] .toast-title{color:var(--navy);}
+.toast-sub{font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px;font-family:var(--mono);}
+[data-theme="dark"] .toast-sub{color:var(--navy-dim);}
+.toast-prog{height:3px;background:rgba(255,255,255,0.2);border-radius:2px;margin-top:6px;overflow:hidden;}
+[data-theme="dark"] .toast-prog{background:var(--border);}
+.toast-prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s linear;}
+.toast-cancel{font-size:11px;font-weight:600;color:rgba(255,255,255,0.55);cursor:pointer;
+  white-space:nowrap;flex-shrink:0;padding:4px 8px;border-radius:6px;transition:all 0.12s;}
+.toast-cancel:hover{background:rgba(255,255,255,0.12);color:#fff;}
+[data-theme="dark"] .toast-cancel{color:var(--navy-dim);}
+
+/* BODY */
+.body{flex:1;display:flex;overflow:hidden;}
+
+/* FLOOR PLAN */
+.floorplan{flex:1;position:relative;overflow:hidden;background:var(--fp-bg);transition:background 0.3s;}
+.floorplan::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(circle,var(--fp-dot) 1px,transparent 1px);background-size:28px 28px;}
+.fp-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+/* DEVICE NODES */
+.dev{position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;z-index:10;-webkit-tap-highlight-color:transparent;}
+.dev-icon-wrap{transition:transform 0.15s;display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.13));}
+.dev:hover .dev-icon-wrap{transform:scale(1.15);}
+.dev.selected .dev-icon-wrap{transform:scale(1.2);filter:drop-shadow(0 0 8px rgba(0,113,227,0.55));}
+.dev-lbl-id{font-size:8px;font-weight:600;color:var(--navy);text-align:center;
+  white-space:nowrap;background:var(--lbl-bg);padding:1px 4px;border-radius:3px;line-height:1.3;}
+.dev-lbl-st{font-family:var(--mono);font-size:7px;text-align:center;line-height:1;}
+
+/* DETAIL PANEL */
+.detail{width:0;background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+  transition:width 0.26s cubic-bezier(0.4,0,0.2,1),background 0.3s,border-color 0.3s;}
+.detail.open{width:256px;}
+.detail-inner{padding:16px;overflow-y:auto;flex:1;position:relative;min-width:256px;}
+.det-close{position:absolute;top:0;right:0;width:28px;height:28px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--navy-dim);}
+.det-close:hover{color:var(--navy);}
+.det-name{font-size:21px;font-weight:700;letter-spacing:-0.4px;padding-right:32px;color:var(--navy);}
+.det-zone{font-size:11px;color:var(--navy-dim);margin-top:3px;}
+.det-status{display:flex;align-items:center;gap:8px;margin-top:12px;padding:9px 12px;border-radius:10px;}
+.det-status.running{background:rgba(40,200,64,0.1);}
+.det-status.stopped{background:var(--surface2);}
+.det-status.ramping{background:rgba(0,113,227,0.1);}
+.det-status.fault  {background:rgba(230,172,0,0.12);}
+.det-status.estop  {background:rgba(255,59,48,0.1);}
+.det-sdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.det-slbl{font-size:13px;font-weight:600;}
+.det-slbl.running{color:var(--green);} .det-slbl.stopped{color:var(--navy-mid);}
+.det-slbl.ramping{color:var(--blue);} .det-slbl.fault{color:var(--yellow);} .det-slbl.estop{color:var(--red);}
+.speed-big{font-size:38px;font-weight:700;letter-spacing:-1.5px;line-height:1;margin-top:14px;color:var(--navy);}
+.speed-unit{font-size:17px;font-weight:400;color:var(--navy-mid);}
+.speed-hz{font-family:var(--mono);font-size:11px;color:var(--navy-dim);margin-top:2px;}
+.speed-track{height:5px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;
+  margin:10px 0 5px;cursor:pointer;position:relative;overflow:visible;}
+.speed-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#4a9eff,var(--blue));
+  transition:width 0.1s;position:relative;}
+.speed-fill::after{content:'';position:absolute;right:-5px;top:-3.5px;width:12px;height:12px;
+  background:var(--blue);border-radius:50%;border:2.5px solid var(--surface);box-shadow:0 1px 4px rgba(0,113,227,0.4);}
+.speed-range{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--navy-dim);}
+.preset-row{display:flex;gap:5px;margin-top:10px;}
+.preset-btn{flex:1;padding:6px 0;border-radius:7px;border:1px solid var(--border);background:var(--surface2);
+  font-family:var(--sans);font-size:12px;font-weight:600;color:var(--navy-mid);cursor:pointer;transition:all 0.12s;text-align:center;}
+.preset-btn:hover{border-color:var(--blue);color:var(--blue);}
+.preset-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.det-sec-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:14px 0 6px;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border2);}
+.data-row:last-child{border-bottom:none;}
+.dr-lbl{font-size:12px;color:var(--navy-mid);}
+.dr-val{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--navy);}
+.dr-val.ok{color:var(--green);} .dr-val.warn{color:var(--yellow);} .dr-val.bad{color:var(--red);}
+.dir-row{display:flex;gap:5px;}
+.dir-btn{flex:1;padding:7px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);
+  font-family:var(--sans);font-size:11px;font-weight:600;color:var(--navy-mid);cursor:pointer;
+  transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.dir-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+[data-theme="dark"] .dir-btn.active{background:var(--blue);border-color:var(--blue);}
+.det-actions{display:flex;gap:6px;margin-top:14px;}
+.det-btn{flex:1;padding:10px 0;border-radius:8px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.12s;}
+.det-btn-start{background:var(--green);color:#fff;}
+.det-btn-start:hover{filter:brightness(1.08);}
+.det-btn-stop{background:var(--surface2);color:var(--navy-mid);border:1px solid var(--border);}
+.det-btn-stop:hover{background:rgba(255,59,48,0.1);color:var(--red);border-color:rgba(255,59,48,0.3);}
+.fault-btn{width:100%;margin-top:7px;padding:9px;border-radius:8px;
+  border:1px solid rgba(230,172,0,0.4);background:rgba(230,172,0,0.1);color:var(--yellow);
+  font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.12s;}
+.fault-btn:hover{background:var(--yellow);color:#000;}
+
+/* LEGEND */
+.legend{position:absolute;bottom:10px;left:10px;display:flex;gap:10px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;z-index:20;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:500;color:var(--navy-mid);}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex;align-items:stretch;height:50px;background:var(--surface);
+  border-top:1px solid var(--border);flex-shrink:0;transition:background 0.3s,border-color 0.3s;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;cursor:pointer;color:var(--navy-dim);font-size:9px;font-weight:500;
+  transition:color 0.12s;border:none;background:none;font-family:var(--sans);-webkit-tap-highlight-color:transparent;}
+.bnav-item.active{color:var(--blue);}
+.bnav-badge{position:relative;}
+.bnav-badge::after{content:'1';position:absolute;top:-5px;right:-9px;background:var(--red);
+  color:#fff;font-size:8px;font-weight:700;width:14px;height:14px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;border:1.5px solid var(--surface);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <svg class="logo-fan-svg" viewBox="0 0 24 24" fill="none">
+      <g transform="rotate(0,12,12)">  <path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(72,12,12)"> <path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(144,12,12)"><path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(216,12,12)"><path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <g transform="rotate(288,12,12)"><path d="M12 12 L10.8 2 Q12 0.5 13.2 2 Z" fill="#0071e3"/></g>
+      <circle cx="12" cy="12" r="2.5" fill="#1d2b3a"/>
+      <circle cx="12" cy="12" r="1.2" fill="#0071e3"/>
+    </svg>
+    <div class="logo-text">Fan<span>OS</span></div>
+    <div class="logo-badge">PRO</div>
+  </div>
+  <div class="t-div"></div>
+  <div class="topbar-site">
+    <div class="site-name">Acme Manufacturing</div>
+    <div class="site-loc">Main Warehouse</div>
+  </div>
+  <div class="topbar-right">
+    <div class="status-pill"><div class="sdot"></div>Normal</div>
+    <div class="topbar-clock" id="clock"><div>9:18 AM</div><div class="topbar-clock-date">Thu May 21</div></div>
+    <div class="dark-toggle" id="darkToggle" onclick="toggleDark()">🌙</div>
+  </div>
+</div>
+
+<!-- CTRL BAR -->
+<div class="ctrl-bar">
+  <div class="stat-item">
+    <div class="stat-dot" style="background:var(--green)"></div>
+    <div><div class="stat-num" id="cnt-run" style="color:var(--green)">18</div><div class="stat-lbl">Running</div></div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:var(--grey)"></div>
+    <div><div class="stat-num" id="cnt-stop" style="color:var(--navy-mid)">4</div><div class="stat-lbl">Stopped</div></div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-dot" style="background:var(--yellow)"></div>
+    <div><div class="stat-num" id="cnt-fault" style="color:var(--yellow)">1</div><div class="stat-lbl">Fault</div></div>
+  </div>
+  <div class="stat-item" style="border-right:1px solid var(--border)">
+    <div class="stat-dot" style="background:var(--blue)"></div>
+    <div><div class="stat-num" id="temp-top" style="color:var(--blue)">77°F</div><div class="stat-lbl">Temp</div></div>
+  </div>
+  <div class="global-btns">
+    <button class="g-btn g-btn-on" onclick="allFansOn()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+      All ON
+    </button>
+    <button class="g-btn g-btn-off" onclick="allFansOff()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+      All OFF
+    </button>
+  </div>
+  <div class="zone-pills">
+    <div class="zpill active" onclick="setZone(this)">All</div>
+    <div class="zpill" onclick="setZone(this)">A</div>
+    <div class="zpill" onclick="setZone(this)">B</div>
+    <div class="zpill" onclick="setZone(this)">C</div>
+  </div>
+</div>
+
+<!-- SPEED CONTROL BAR -->
+<div class="speed-bar">
+  <span class="sb-label">Speed</span>
+  <div class="sb-divider"></div>
+
+  <!-- ALL fans -->
+  <div class="sb-group">
+    <span class="sb-group-lbl">All</span>
+    <button class="spd-btn lo" onclick="setAllSpeed(33,'all',this)">Low</button>
+    <button class="spd-btn md" onclick="setAllSpeed(65,'all',this)">Med</button>
+    <button class="spd-btn hi" onclick="setAllSpeed(100,'all',this)">High</button>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <!-- Zone A -->
+  <div class="sb-group">
+    <span class="sb-group-lbl" style="color:#28c840">Zone A</span>
+    <button class="spd-btn lo" onclick="setAllSpeed(33,'Zone A',this)">Low</button>
+    <button class="spd-btn md" onclick="setAllSpeed(65,'Zone A',this)">Med</button>
+    <button class="spd-btn hi" onclick="setAllSpeed(100,'Zone A',this)">High</button>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <!-- Zone B -->
+  <div class="sb-group">
+    <span class="sb-group-lbl" style="color:#e6ac00">Zone B</span>
+    <button class="spd-btn lo" onclick="setAllSpeed(33,'Zone B',this)">Low</button>
+    <button class="spd-btn md" onclick="setAllSpeed(65,'Zone B',this)">Med</button>
+    <button class="spd-btn hi" onclick="setAllSpeed(100,'Zone B',this)">High</button>
+  </div>
+
+  <div class="sb-divider"></div>
+
+  <!-- Zone C -->
+  <div class="sb-group">
+    <span class="sb-group-lbl" style="color:#0071e3">Zone C</span>
+    <button class="spd-btn lo" onclick="setAllSpeed(33,'Zone C',this)">Low</button>
+    <button class="spd-btn md" onclick="setAllSpeed(65,'Zone C',this)">Med</button>
+    <button class="spd-btn hi" onclick="setAllSpeed(100,'Zone C',this)">High</button>
+  </div>
+</div>
+
+<!-- STAGGERED START TOAST -->
+<div class="start-toast" id="startToast">
+  <div class="toast-icon">⚡</div>
+  <div class="toast-body">
+    <div class="toast-title" id="toastTitle">Starting motors…</div>
+    <div class="toast-sub" id="toastSub">Starting HVLS-01 · 0 of 22 complete</div>
+    <div class="toast-prog"><div class="toast-prog-fill" id="toastProg" style="width:0%"></div></div>
+  </div>
+  <div class="toast-cancel" onclick="cancelStagger()">Cancel</div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+<div class="floorplan" id="fp">
+
+  <svg class="fp-svg" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet">
+    <rect x="55" y="25" width="890" height="570" rx="4"
+          fill="rgba(29,43,58,0.016)" stroke="rgba(29,43,58,0.18)" stroke-width="2"/>
+    <rect x="55" y="520" width="890" height="75"
+          fill="rgba(29,43,58,0.01)" stroke="rgba(29,43,58,0.1)" stroke-width="1" stroke-dasharray="7,4"/>
+    <text x="500" y="290" text-anchor="middle" font-family="DM Sans,sans-serif"
+          font-size="11" fill="rgba(29,43,58,0.06)" letter-spacing="4" font-weight="700">ZONE A — MAIN WAREHOUSE</text>
+    <text x="500" y="558" text-anchor="middle" font-family="DM Sans,sans-serif"
+          font-size="9" fill="rgba(29,43,58,0.07)" letter-spacing="3" font-weight="700">ZONE B — LOADING DOCK</text>
+    <circle cx="220" cy="185" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="220" cy="430" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="500" cy="185" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="500" cy="430" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="780" cy="185" r="5" fill="rgba(29,43,58,0.07)"/>
+    <circle cx="780" cy="430" r="5" fill="rgba(29,43,58,0.07)"/>
+  </svg>
+
+  <!-- HVLS 3×5 -->
+  <div class="dev" data-id="HVLS-01" data-type="hvls" style="left:17%;top:20%" onclick="selectDev('HVLS-01')"></div>
+  <div class="dev" data-id="HVLS-02" data-type="hvls" style="left:29%;top:20%" onclick="selectDev('HVLS-02')"></div>
+  <div class="dev selected" data-id="HVLS-03" data-type="hvls" style="left:41%;top:20%" onclick="selectDev('HVLS-03')"></div>
+  <div class="dev" data-id="HVLS-04" data-type="hvls" style="left:55%;top:20%" onclick="selectDev('HVLS-04')"></div>
+  <div class="dev" data-id="HVLS-05" data-type="hvls" style="left:69%;top:20%" onclick="selectDev('HVLS-05')"></div>
+  <div class="dev" data-id="HVLS-06" data-type="hvls" style="left:17%;top:43%" onclick="selectDev('HVLS-06')"></div>
+  <div class="dev" data-id="HVLS-07" data-type="hvls" style="left:29%;top:43%" onclick="selectDev('HVLS-07')"></div>
+  <div class="dev" data-id="HVLS-08" data-type="hvls" style="left:41%;top:43%" onclick="selectDev('HVLS-08')"></div>
+  <div class="dev" data-id="HVLS-09" data-type="hvls" style="left:55%;top:43%" onclick="selectDev('HVLS-09')"></div>
+  <div class="dev" data-id="HVLS-10" data-type="hvls" style="left:69%;top:43%" onclick="selectDev('HVLS-10')"></div>
+  <div class="dev" data-id="HVLS-11" data-type="hvls" style="left:17%;top:66%" onclick="selectDev('HVLS-11')"></div>
+  <div class="dev" data-id="HVLS-12" data-type="hvls" style="left:29%;top:66%" onclick="selectDev('HVLS-12')"></div>
+  <div class="dev" data-id="HVLS-13" data-type="hvls" style="left:41%;top:66%" onclick="selectDev('HVLS-13')"></div>
+  <div class="dev" data-id="HVLS-14" data-type="hvls" style="left:55%;top:66%" onclick="selectDev('HVLS-14')"></div>
+  <div class="dev" data-id="HVLS-15" data-type="hvls" style="left:69%;top:66%" onclick="selectDev('HVLS-15')"></div>
+  <!-- Barrel fans -->
+  <div class="dev" data-id="Barrel-L1" data-type="barrel" style="left:8%;top:28%"  onclick="selectDev('Barrel-L1')"></div>
+  <div class="dev" data-id="Barrel-L2" data-type="barrel" style="left:8%;top:55%"  onclick="selectDev('Barrel-L2')"></div>
+  <div class="dev" data-id="Barrel-R1" data-type="barrel" style="left:83%;top:28%" onclick="selectDev('Barrel-R1')"></div>
+  <div class="dev" data-id="Barrel-R2" data-type="barrel" style="left:83%;top:55%" onclick="selectDev('Barrel-R2')"></div>
+  <div class="dev" data-id="Barrel-D1" data-type="barrel" style="left:30%;top:86%" onclick="selectDev('Barrel-D1')"></div>
+  <div class="dev" data-id="Barrel-D2" data-type="barrel" style="left:55%;top:86%" onclick="selectDev('Barrel-D2')"></div>
+  <!-- Wall exhaust -->
+  <div class="dev" data-id="WExh-L1" data-type="wallexh" style="left:5%;top:15%"  onclick="selectDev('WExh-L1')"></div>
+  <div class="dev" data-id="WExh-L2" data-type="wallexh" style="left:5%;top:70%"  onclick="selectDev('WExh-L2')"></div>
+  <div class="dev" data-id="WExh-R1" data-type="wallexh" style="left:95%;top:15%" onclick="selectDev('WExh-R1')"></div>
+  <div class="dev" data-id="WExh-R2" data-type="wallexh" style="left:95%;top:70%" onclick="selectDev('WExh-R2')"></div>
+  <!-- Roof exhaust grid -->
+  <div class="dev" data-id="RExh-01" data-type="roofexh" style="left:22%;top:7%"  onclick="selectDev('RExh-01')"></div>
+  <div class="dev" data-id="RExh-02" data-type="roofexh" style="left:38%;top:7%"  onclick="selectDev('RExh-02')"></div>
+  <div class="dev" data-id="RExh-03" data-type="roofexh" style="left:55%;top:7%"  onclick="selectDev('RExh-03')"></div>
+  <div class="dev" data-id="RExh-04" data-type="roofexh" style="left:72%;top:7%"  onclick="selectDev('RExh-04')"></div>
+  <div class="dev" data-id="RExh-05" data-type="roofexh" style="left:22%;top:35%" onclick="selectDev('RExh-05')"></div>
+  <div class="dev" data-id="RExh-06" data-type="roofexh" style="left:55%;top:35%" onclick="selectDev('RExh-06')"></div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Running</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--grey)"></div>Stopped</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Fault</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>E-Stop</div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail" id="detail">
+  <div class="detail-inner">
+    <div style="position:relative;">
+      <div class="det-name" id="det-name">HVLS-03</div>
+      <div class="det-zone" id="det-zone">Zone A</div>
+      <div class="det-close" onclick="closeDetail()">✕</div>
+    </div>
+    <div class="det-status running" id="det-sc">
+      <div class="det-sdot" id="det-sdot" style="background:var(--green)"></div>
+      <div class="det-slbl running" id="det-slbl">Running</div>
+    </div>
+    <div class="speed-big" id="det-speed">65<span class="speed-unit">%</span></div>
+    <div class="speed-hz" id="det-hz">35.8 Hz</div>
+    <div class="speed-track" onclick="clickTrack(event,this)">
+      <div class="speed-fill" id="spd-fill" style="width:65%"></div>
+    </div>
+    <div class="speed-range"><span>0</span><span>100%</span></div>
+    <div class="preset-row">
+      <button class="preset-btn" onclick="setPreset(33,this)">Low</button>
+      <button class="preset-btn active" onclick="setPreset(65,this)">Mid</button>
+      <button class="preset-btn" onclick="setPreset(100,this)">High</button>
+    </div>
+    <div class="det-sec-lbl" id="dir-lbl">Direction</div>
+    <div class="dir-row" id="dir-row">
+      <button class="dir-btn active" id="dir-fwd" onclick="setDir('fwd')">↻ Forward</button>
+      <button class="dir-btn" id="dir-rev" onclick="setDir('rev')">↺ Reverse</button>
+    </div>
+    <div class="det-sec-lbl">Live Data</div>
+    <div class="data-row"><span class="dr-lbl">Output Hz</span><span class="dr-val" id="d-hz">35.8 Hz</span></div>
+    <div class="data-row"><span class="dr-lbl">Current</span><span class="dr-val" id="d-amps">4.2 A</span></div>
+    <div class="data-row"><span class="dr-lbl">Power</span><span class="dr-val" id="d-kw">1.2 kW</span></div>
+    <div class="data-row"><span class="dr-lbl">Temp Nearby</span><span class="dr-val" id="d-temp">76°F</span></div>
+    <div class="data-row"><span class="dr-lbl">Run Time</span><span class="dr-val" id="d-rt">6.2 hrs</span></div>
+    <div class="data-row"><span class="dr-lbl">Last Fault</span><span class="dr-val ok" id="d-fault">None</span></div>
+    <div class="det-sec-lbl">Device</div>
+    <div class="data-row"><span class="dr-lbl">Modbus Addr</span><span class="dr-val" id="d-addr">3</span></div>
+    <div class="data-row"><span class="dr-lbl">VFD</span><span class="dr-val" id="d-vfd">Invertek E3</span></div>
+    <div class="data-row"><span class="dr-lbl">Type</span><span class="dr-val" id="d-type">HVLS Fan</span></div>
+    <div class="det-actions">
+      <button class="det-btn det-btn-start" onclick="detStart()">Start</button>
+      <button class="det-btn det-btn-stop"  onclick="detStop()">Stop</button>
+    </div>
+    <div id="fault-wrap" style="display:none">
+      <button class="fault-btn" onclick="resetFault()">⚡ Reset Fault</button>
+    </div>
+  </div>
+</div>
+</div><!-- /body -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-item active" onclick="bnav(this)">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+  <button class="bnav-item" onclick="bnav(this)">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Zones
+  </button>
+  <button class="bnav-item" onclick="bnav(this)">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Schedule
+  </button>
+  <button class="bnav-item" onclick="bnav(this)">
+    <div class="bnav-badge">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    Alarms
+  </button>
+  <button class="bnav-item" onclick="bnav(this)">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    Settings
+  </button>
+</div>
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// DEVICE DATABASE
+// ═══════════════════════════════════════════════════
+// Base electrical specs at 100% (55 Hz):
+//   HVLS: maxA=6.5, maxKW=2.0
+//   Barrel: maxA=7.0, maxKW=2.2
+//   WallExh: maxA=5.5, maxKW=1.6
+//   RoofExh: maxA=7.5, maxKW=2.4
+// Power scales roughly with cube of speed (fan law),
+// Current scales with square of speed — clamped for display realism.
+// We store maxA/maxKW per device and compute live values from s%.
+
+const DB = {
+  'HVLS-01':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:75,rt:6.1,addr:1, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-02':{type:'hvls', s:72,tgt:72,st:'running',fault:'None',t:76,rt:6.5,addr:2, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-03':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:3, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-04':{type:'hvls', s:58,tgt:58,st:'running',fault:'None',t:75,rt:5.8,addr:4, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-05':{type:'hvls', s:80,tgt:80,st:'running',fault:'None',t:78,rt:6.2,addr:5, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-06':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:6, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-07':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:77,rt:6.2,addr:7, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-08':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:8, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-09':{type:'hvls', s:0, tgt:65,st:'stopped',fault:'None',t:75,rt:0,  addr:9, vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-10':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:10,vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-11':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:11,vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-12':{type:'hvls', s:0, tgt:65,st:'fault',  fault:'E07 Overload',t:77,rt:3.2,addr:12,vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-13':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:13,vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-14':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:14,vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'HVLS-15':{type:'hvls', s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:15,vfd:'Invertek E3',zone:'Zone A',maxA:6.5,maxKW:2.0},
+  'Barrel-L1':{type:'barrel',s:70,tgt:70,st:'running',fault:'None',t:76,rt:5.8,addr:16,vfd:'ABB ACH550',zone:'Zone A',maxA:7.0,maxKW:2.2},
+  'Barrel-L2':{type:'barrel',s:70,tgt:70,st:'running',fault:'None',t:77,rt:5.8,addr:17,vfd:'ABB ACH550',zone:'Zone A',maxA:7.0,maxKW:2.2},
+  'Barrel-R1':{type:'barrel',s:60,tgt:60,st:'running',fault:'None',t:76,rt:5.5,addr:18,vfd:'ABB ACH550',zone:'Zone A',maxA:7.0,maxKW:2.2},
+  'Barrel-R2':{type:'barrel',s:0, tgt:60,st:'stopped',fault:'None',t:75,rt:0,  addr:19,vfd:'ABB ACH550',zone:'Zone A',maxA:7.0,maxKW:2.2},
+  'Barrel-D1':{type:'barrel',s:65,tgt:65,st:'running',fault:'None',t:72,rt:5.0,addr:20,vfd:'ABB ACH550',zone:'Zone B',maxA:7.0,maxKW:2.2},
+  'Barrel-D2':{type:'barrel',s:65,tgt:65,st:'running',fault:'None',t:72,rt:5.0,addr:21,vfd:'ABB ACH550',zone:'Zone B',maxA:7.0,maxKW:2.2},
+  'WExh-L1':{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:22,vfd:'Yaskawa GA500',zone:'Zone A',maxA:5.5,maxKW:1.6},
+  'WExh-L2':{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:23,vfd:'Yaskawa GA500',zone:'Zone A',maxA:5.5,maxKW:1.6},
+  'WExh-R1':{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:24,vfd:'Yaskawa GA500',zone:'Zone A',maxA:5.5,maxKW:1.6},
+  'WExh-R2':{type:'wallexh',s:0,  tgt:100,st:'fault',  fault:'E03 Overcurrent',t:79,rt:2.1,addr:25,vfd:'Yaskawa GA500',zone:'Zone A',maxA:5.5,maxKW:1.6},
+  'RExh-01':{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:82,rt:8.0,addr:26,vfd:'Danfoss FC',zone:'Zone A',maxA:7.5,maxKW:2.4},
+  'RExh-02':{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:27,vfd:'Danfoss FC',zone:'Zone A',maxA:7.5,maxKW:2.4},
+  'RExh-03':{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:28,vfd:'Danfoss FC',zone:'Zone A',maxA:7.5,maxKW:2.4},
+  'RExh-04':{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:82,rt:8.0,addr:29,vfd:'Danfoss FC',zone:'Zone A',maxA:7.5,maxKW:2.4},
+  'RExh-05':{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:30,vfd:'Danfoss FC',zone:'Zone A',maxA:7.5,maxKW:2.4},
+  'RExh-06':{type:'roofexh',s:0,  tgt:100,st:'stopped',fault:'None',t:80,rt:0,  addr:31,vfd:'Danfoss FC',zone:'Zone A',maxA:7.5,maxKW:2.4},
+};
+
+// ── Power/current scaling (fan affinity laws) ──────────────────
+// Current ∝ speed^1.5,  Power ∝ speed^2.5  (good approximation for VFD fans)
+// Both return 0 when speed=0
+function liveAmps(d){
+  if(d.s<=0) return 0;
+  return +(d.maxA * Math.pow(d.s/100, 1.5)).toFixed(1);
+}
+function liveKW(d){
+  if(d.s<=0) return 0;
+  return +(d.maxKW * Math.pow(d.s/100, 2.5)).toFixed(2);
+}
+function liveHz(d){ return +(d.s/100*55).toFixed(1); }
+
+const typeLabel = {hvls:'HVLS Fan',barrel:'Barrel / Basket Fan',wallexh:'Wall Exhaust',roofexh:'Roof Exhaust'};
+const ST_COL = {running:'#28c840',stopped:'#b0bec5',fault:'#e6ac00',estop:'#ff3b30',ramping:'#0071e3'};
+function col(st){ return ST_COL[st]||'#b0bec5'; }
+
+// ── HUB COLOR ─────────────────────────────────────────────────
+function hubCol(c){
+  return {
+    '#28c840':'#1a8a35','#e6ac00':'#9a7000',
+    '#ff3b30':'#c0281e','#0071e3':'#004fb3','#b0bec5':'#8a9ab0'
+  }[c]||'#8a9ab0';
+}
+
+// ═══════════════════════════════════════════════════
+// RAF-BASED ROTATION ENGINE
+// No CSS animation on device rotors. One rAF loop,
+// each rotor tracks its own angle. Speed drives deg/frame.
+// ═══════════════════════════════════════════════════
+const rotors = {}; // id → { el: SVGElement, angle: number }
+let lastTime = null;
+
+// Max rotation speed at 100%: 3 revolutions/sec = 1080 deg/sec
+const MAX_DEG_PER_SEC = 1080;
+
+function rafLoop(ts){
+  if(!lastTime) lastTime=ts;
+  const dt = Math.min((ts-lastTime)/1000, 0.05); // seconds, capped at 50ms
+  lastTime=ts;
+
+  for(const id in rotors){
+    const r = rotors[id];
+    const d = DB[id];
+    if(!d||!r.el) continue;
+    const speed = d.s/100; // 0–1
+    const degPerSec = speed * MAX_DEG_PER_SEC;
+    r.angle = (r.angle + degPerSec*dt) % 360;
+    r.el.setAttribute('transform', `rotate(${r.angle.toFixed(2)},${r.cx},${r.cy})`);
+  }
+  requestAnimationFrame(rafLoop);
+}
+requestAnimationFrame(rafLoop);
+
+// ── BUILD ICON SVGs (static shell, rotor group has no transform — RAF sets it) ──
+
+function makeSVG(id){
+  const d=DB[id];
+  const c=col(d.st);
+  const hc=hubCol(c);
+  const rid=id.replace(/\W/g,'_');
+
+  if(d.type==='hvls'){
+    const blades=[0,72,144,216,288].map(a=>`<g transform="rotate(${a},20,20)"><rect x="18.5" y="3" width="3" height="14" rx="1.2" fill="${c}"/></g>`).join('');
+    return `<svg viewBox="0 0 40 40" width="44" height="44">
+      <g id="rot_${rid}">
+        ${blades}
+        <circle cx="20" cy="20" r="4" fill="${hc}"/>
+        <circle cx="20" cy="20" r="1.8" fill="rgba(255,255,255,0.5)"/>
+      </g></svg>`;
+  }
+  if(d.type==='barrel'){
+    const spokes=[0,60,120,180,240,300].map(a=>`<line x1="16" y1="16" x2="${+(16+13*Math.cos(a*Math.PI/180)).toFixed(1)}" y2="${+(16+13*Math.sin(a*Math.PI/180)).toFixed(1)}" stroke="${c}" stroke-width="0.7" opacity="0.3"/>`).join('');
+    const blades=[0,90,180,270].map(a=>`<g transform="rotate(${a},16,16)"><path d="M16 16 L14.5 5 Q16 3.5 17.5 5 Z" fill="${c}"/></g>`).join('');
+    return `<svg viewBox="0 0 32 32" width="32" height="32">
+      <circle cx="16" cy="16" r="14.5" fill="none" stroke="${c}" stroke-width="2.5" opacity="0.55" class="sh_${rid}"/>
+      <circle cx="16" cy="16" r="10"   fill="none" stroke="${c}" stroke-width="0.8" opacity="0.18" class="sh_${rid}"/>
+      ${spokes}
+      <g id="rot_${rid}">
+        ${blades}
+        <circle cx="16" cy="16" r="3.5" fill="${hc}"/>
+        <circle cx="16" cy="16" r="1.6" fill="rgba(255,255,255,0.55)"/>
+      </g></svg>`;
+  }
+  if(d.type==='wallexh'){
+    const blades=[0,90,180,270].map(a=>`<g transform="rotate(${a},15,15)"><path d="M15 15 L13.8 6 Q15 4.8 16.2 6 Z" fill="${c}"/></g>`).join('');
+    return `<svg viewBox="0 0 30 30" width="28" height="28">
+      <rect x="1" y="1" width="28" height="28" rx="3" fill="none" stroke="${c}" stroke-width="2" opacity="0.5" class="sh_${rid}"/>
+      <line x1="1" y1="8"  x2="29" y2="8"  stroke="${c}" stroke-width="0.7" opacity="0.22" class="sh_${rid}"/>
+      <line x1="1" y1="15" x2="29" y2="15" stroke="${c}" stroke-width="0.7" opacity="0.22" class="sh_${rid}"/>
+      <line x1="1" y1="22" x2="29" y2="22" stroke="${c}" stroke-width="0.7" opacity="0.22" class="sh_${rid}"/>
+      <circle cx="15" cy="15" r="11" fill="none" stroke="${c}" stroke-width="0.8" opacity="0.18" class="sh_${rid}"/>
+      <g id="rot_${rid}">
+        ${blades}
+        <circle cx="15" cy="15" r="3"   fill="${hc}"/>
+        <circle cx="15" cy="15" r="1.4" fill="rgba(255,255,255,0.5)"/>
+      </g></svg>`;
+  }
+  if(d.type==='roofexh'){
+    const blades=[0,60,120,180,240,300].map(a=>`<g transform="rotate(${a},16,16)"><path d="M16 16 Q20 11 18 7" stroke="${c}" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>`).join('');
+    return `<svg viewBox="0 0 32 32" width="30" height="30">
+      <rect x="1" y="1" width="30" height="30" rx="4" fill="none" stroke="${c}" stroke-width="1.8" opacity="0.38" class="sh_${rid}"/>
+      <circle cx="16" cy="16" r="13" fill="rgba(29,43,58,0.02)" stroke="${c}" stroke-width="1.2" opacity="0.32" class="sh_${rid}"/>
+      <g id="rot_${rid}">
+        ${blades}
+        <circle cx="16" cy="16" r="3.8" fill="${hc}"/>
+        <circle cx="16" cy="16" r="1.8" fill="rgba(255,255,255,0.5)"/>
+      </g></svg>`;
+  }
+  return '';
+}
+
+// Center coords for each type (for RAF transform origin)
+const ROT_CENTER = {hvls:[20,20],barrel:[16,16],wallexh:[15,15],roofexh:[16,16]};
+
+function makeLabelSt(d){
+  if(d.s>0&&(d.st==='running'||d.st==='ramping')) return liveHz(d).toFixed(1)+' Hz';
+  return {running:'Running',stopped:'Stopped',fault:'Fault',estop:'E-Stop',ramping:'Ramping…'}[d.st]||d.st;
+}
+
+function buildAllNodes(){
+  document.querySelectorAll('.dev').forEach(el=>{
+    const id=el.dataset.id; const d=DB[id]; if(!d) return;
+    const c=col(d.st);
+    el.innerHTML=`<div class="dev-icon-wrap">${makeSVG(id)}</div>
+      <div class="dev-lbl-id">${id}</div>
+      <div class="dev-lbl-st" style="color:${c}" id="lst_${id.replace(/\W/g,'_')}">${makeLabelSt(d)}</div>`;
+    // Register rotor
+    const rid=id.replace(/\W/g,'_');
+    const rotEl=document.getElementById('rot_'+rid);
+    const [cx,cy]=ROT_CENTER[d.type]||[16,16];
+    rotors[id]={el:rotEl, angle:Math.random()*360, cx, cy};
+  });
+}
+buildAllNodes();
+
+// ── Update color only (no rebuild) ────────────────────────────
+function updateColor(id){
+  const d=DB[id]; const c=col(d.st); const hc=hubCol(c);
+  const rid=id.replace(/\W/g,'_');
+  // Shell elements
+  document.querySelectorAll('.sh_'+rid).forEach(el=>{
+    if(el.getAttribute('stroke')) el.setAttribute('stroke',c);
+  });
+  // Rotor blades/paths
+  const rot=document.getElementById('rot_'+rid);
+  if(rot){
+    rot.querySelectorAll('rect,path').forEach(el=>{
+      if(el.getAttribute('fill')&&el.getAttribute('fill')!=='rgba(255,255,255,0.5)'&&el.getAttribute('fill')!=='rgba(255,255,255,0.55)'&&el.getAttribute('fill')!=='rgba(255,255,255,0.5)'){
+        if(el.getAttribute('stroke')&&!el.getAttribute('fill')||el.getAttribute('fill')==='none'){
+          el.setAttribute('stroke',c);
+        } else {
+          el.setAttribute('fill',c);
+        }
+      }
+    });
+    rot.querySelectorAll('circle').forEach((el,i)=>{
+      if(i===0) el.setAttribute('fill',hc);
+    });
+  }
+  // Status label
+  const lbl=document.getElementById('lst_'+rid);
+  if(lbl){lbl.style.color=c;lbl.textContent=makeLabelSt(d);}
+}
+
+// ═══════════════════════════════════════════════════
+// RAMP ENGINE — speed ramps, RAF handles visual smoothly
+// ═══════════════════════════════════════════════════
+const STEP=1.8; // %/200ms ≈ 12s for full range
+const rampTimers={};
+
+function startRamp(id){
+  if(rampTimers[id]) clearInterval(rampTimers[id]);
+  const d=DB[id];
+  rampTimers[id]=setInterval(()=>{
+    const diff=d.tgt-d.s;
+    if(Math.abs(diff)<STEP){
+      d.s=d.tgt;
+      d.st=d.s===0?'stopped':'running';
+      clearInterval(rampTimers[id]); delete rampTimers[id];
+    } else {
+      d.s+=diff>0?STEP:-STEP;
+      d.s=Math.max(0,Math.min(100,d.s));
+      d.st=d.s>0?(d.tgt>d.s||d.tgt===0?'ramping':'running'):'stopped';
+    }
+    updateColor(id);
+    if(sel===id) refreshDetailLive();
+    updateCounts();
+  },200);
+}
+
+function rampTo(id,tgt){
+  const d=DB[id]; if(!d) return;
+  if(tgt>0&&d.st==='stopped') d.st='ramping';
+  d.tgt=tgt;
+  startRamp(id);
+}
+
+// ═══════════════════════════════════════════════════
+// SELECTION & DETAIL PANEL
+// ═══════════════════════════════════════════════════
+let sel='HVLS-03';
+
+function selectDev(id){
+  sel=id;
+  document.querySelectorAll('.dev').forEach(n=>n.classList.remove('selected'));
+  const el=document.querySelector(`.dev[data-id="${id}"]`);
+  if(el) el.classList.add('selected');
+  document.getElementById('detail').classList.add('open');
+  refreshDetail(id);
+}
+
+function refreshDetail(id){
+  const d=DB[id]; if(!d) return;
+  document.getElementById('det-name').textContent=id;
+  document.getElementById('det-zone').textContent=d.zone+' — Warehouse';
+  document.getElementById('d-addr').textContent=d.addr;
+  document.getElementById('d-vfd').textContent=d.vfd;
+  document.getElementById('d-type').textContent=typeLabel[d.type]||d.type;
+  const isExh=d.type==='roofexh'||d.type==='wallexh';
+  document.getElementById('dir-row').style.display=isExh?'none':'flex';
+  document.getElementById('dir-lbl').style.display=isExh?'none':'block';
+  document.getElementById('d-temp').textContent=d.t+'°F';
+  document.getElementById('d-rt').textContent=d.rt.toFixed(1)+' hrs';
+  refreshDetailLive();
+}
+
+function refreshDetailLive(){
+  const d=DB[sel]; if(!d) return;
+  const pct=Math.round(d.s);
+  const hz=liveHz(d);
+  const a=liveAmps(d);
+  const kw=liveKW(d);
+
+  document.getElementById('det-speed').innerHTML=pct+'<span class="speed-unit">%</span>';
+  document.getElementById('det-hz').textContent=hz.toFixed(1)+' Hz';
+  document.getElementById('spd-fill').style.width=pct+'%';
+  document.getElementById('d-hz').textContent=hz.toFixed(1)+' Hz';
+  document.getElementById('d-amps').textContent=a.toFixed(1)+' A';
+  document.getElementById('d-kw').textContent=kw.toFixed(2)+' kW';
+
+  const fe=document.getElementById('d-fault');
+  fe.textContent=d.fault||'None';
+  fe.className='dr-val '+(d.fault&&d.fault!=='None'?'warn':'ok');
+
+  const stMap={
+    running:['#28c840','Running'],stopped:['#b0bec5','Stopped'],
+    ramping:['#0071e3','Ramping…'],fault:['#e6ac00','Fault'],estop:['#ff3b30','E-Stop']
+  };
+  const [c,lbl]=stMap[d.st]||stMap.stopped;
+  document.getElementById('det-sc').className='det-status '+d.st;
+  document.getElementById('det-slbl').className='det-slbl '+d.st;
+  document.getElementById('det-slbl').textContent=lbl;
+  document.getElementById('det-sdot').style.background=c;
+  document.getElementById('fault-wrap').style.display=d.st==='fault'?'block':'none';
+}
+
+function closeDetail(){
+  document.getElementById('detail').classList.remove('open');
+  document.querySelectorAll('.dev').forEach(n=>n.classList.remove('selected'));
+}
+
+// Controls
+function clickTrack(e,bar){
+  const r=bar.getBoundingClientRect();
+  const pct=Math.min(100,Math.max(0,Math.round((e.clientX-r.left)/r.width*100)));
+  rampTo(sel,pct);
+}
+function setPreset(pct,btn){
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); rampTo(sel,pct);
+}
+function setDir(d){
+  document.getElementById('dir-fwd').classList.toggle('active',d==='fwd');
+  document.getElementById('dir-rev').classList.toggle('active',d==='rev');
+}
+function detStart(){
+  const d=DB[sel]; if(!d||d.st==='fault'||d.st==='estop') return;
+  rampTo(sel,d.tgt||65);
+}
+function detStop(){
+  const d=DB[sel]; if(!d) return;
+  if(d.s>0) d.tgt=d.s;
+  rampTo(sel,0);
+}
+function resetFault(){
+  const d=DB[sel]; if(!d) return;
+  d.st='stopped'; d.fault='None'; d.s=0; d.tgt=65;
+  updateColor(sel); refreshDetail(sel); updateCounts();
+}
+// ─── STAGGERED START ─────────────────────────────────────────
+// 8 second delay between each motor start to prevent inrush spikes
+const STAGGER_DELAY = 8000; // ms between each motor
+let staggerQueue   = [];
+let staggerTimer   = null;
+let staggerTotal   = 0;
+let staggerDone    = 0;
+
+function staggeredStart(ids, targetSpeed){
+  // Cancel any running stagger
+  cancelStagger();
+
+  // Only start devices that are stopped (not fault/estop/already running)
+  staggerQueue = ids.filter(id=>{
+    const d=DB[id];
+    return d && d.st!=='fault' && d.st!=='estop' && d.st==='stopped';
+  });
+
+  if(staggerQueue.length===0){
+    // All already running — just set speed
+    ids.forEach(id=>{ const d=DB[id]; if(d&&d.st==='running') rampTo(id,targetSpeed); });
+    return;
+  }
+
+  staggerTotal = staggerQueue.length;
+  staggerDone  = 0;
+  const allCount = ids.length;
+
+  // Show toast
+  showToast(`Starting ${staggerTotal} motor${staggerTotal>1?'s':''} — staggered`,
+    `Waiting for inrush to settle between starts`, 0);
+
+  // Fire first immediately, then stagger
+  function fireNext(){
+    if(staggerQueue.length===0){
+      // Also ramp running fans to new speed
+      ids.forEach(id=>{ const d=DB[id]; if(d&&d.st==='running'&&d.s>0) rampTo(id,targetSpeed); });
+      setTimeout(hideToast, 2000);
+      return;
+    }
+    const id = staggerQueue.shift();
+    staggerDone++;
+    const d=DB[id]; if(!d){fireNext();return;}
+
+    d.tgt=targetSpeed;
+    rampTo(id,targetSpeed);
+
+    const pct=Math.round(staggerDone/staggerTotal*100);
+    showToast(
+      `Starting motor ${staggerDone} of ${staggerTotal}`,
+      `${id} → ${targetSpeed}% · Next in ${STAGGER_DELAY/1000}s`,
+      pct
+    );
+
+    if(staggerQueue.length>0){
+      staggerTimer=setTimeout(fireNext, STAGGER_DELAY);
+    } else {
+      staggerTimer=setTimeout(()=>{
+        ids.forEach(id=>{ const d=DB[id]; if(d&&d.st==='running'&&d.s>0) rampTo(id,targetSpeed); });
+        showToast('All motors started','Inrush sequence complete',100);
+        setTimeout(hideToast,2500);
+      }, STAGGER_DELAY);
+    }
+  }
+  fireNext();
+}
+
+function cancelStagger(){
+  if(staggerTimer){ clearTimeout(staggerTimer); staggerTimer=null; }
+  staggerQueue=[];
+  hideToast();
+}
+
+// Toast helpers
+function showToast(title, sub, pct){
+  document.getElementById('toastTitle').textContent=title;
+  document.getElementById('toastSub').textContent=sub;
+  document.getElementById('toastProg').style.width=pct+'%';
+  document.getElementById('startToast').classList.add('visible');
+}
+function hideToast(){
+  document.getElementById('startToast').classList.remove('visible');
+}
+
+function allFansOn(){
+  const ids=Object.keys(DB);
+  // Any already running fans go straight to their target speed
+  ids.forEach(id=>{ const d=DB[id]; if(d&&d.st==='running'&&d.s>0) rampTo(id,d.tgt||65); });
+  staggeredStart(ids, null); // null = each fan uses its own saved tgt
+}
+
+// Override staggeredStart to support per-fan tgt when speed=null
+const _origStaggeredStart = staggeredStart;
+function staggeredStart(ids, targetSpeed){
+  cancelStagger();
+  staggerQueue = ids.filter(id=>{
+    const d=DB[id];
+    return d && d.st!=='fault' && d.st!=='estop' && d.st==='stopped';
+  });
+  if(staggerQueue.length===0){
+    if(targetSpeed!==null) ids.forEach(id=>{ const d=DB[id]; if(d&&d.st==='running') rampTo(id,targetSpeed); });
+    return;
+  }
+  staggerTotal=staggerQueue.length; staggerDone=0;
+  showToast(`Starting ${staggerTotal} motor${staggerTotal>1?'s':''} — staggered`,`8s delay between starts`,0);
+  function fireNext(){
+    if(staggerQueue.length===0){
+      if(targetSpeed!==null) ids.forEach(id=>{ const d=DB[id]; if(d&&d.st==='running'&&d.s>0) rampTo(id,targetSpeed); });
+      setTimeout(hideToast,2500);return;
+    }
+    const id=staggerQueue.shift(); staggerDone++;
+    const d=DB[id]; if(!d){fireNext();return;}
+    const tgt=targetSpeed!==null?targetSpeed:(d.tgt||65);
+    d.tgt=tgt; rampTo(id,tgt);
+    const pct=Math.round(staggerDone/staggerTotal*100);
+    showToast(`Motor ${staggerDone} of ${staggerTotal} — ${id}`,
+      `Running to ${tgt}% · Next in ${STAGGER_DELAY/1000}s`,pct);
+    staggerTimer=setTimeout(fireNext, staggerQueue.length?STAGGER_DELAY:500);
+  }
+  fireNext();
+}
+
+function allFansOff(){
+  Object.keys(DB).forEach(id=>{
+    const d=DB[id]; if(!d||d.st==='fault'||d.st==='estop') return;
+    if(d.s>0) d.tgt=d.s;
+    rampTo(id,0);
+  });
+}
+
+// Set all (or zone) fans to a speed preset
+// Running fans ramp immediately. Stopped fans get queued in stagger.
+function setAllSpeed(pct, zone, btn){
+  // Highlight active button within its group
+  if(btn){
+    const group=btn.closest('.sb-group');
+    if(group) group.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const ids=Object.keys(DB).filter(id=>{
+    const d=DB[id];
+    if(!d||d.st==='fault'||d.st==='estop') return false;
+    return zone==='all'||d.zone===zone;
+  });
+  // Running fans → ramp immediately
+  ids.forEach(id=>{ const d=DB[id]; if(d.st==='running'||d.st==='ramping') rampTo(id,pct); });
+  // Stopped fans → stagger start
+  staggeredStart(ids, pct);
+}
+function updateCounts(){
+  const vals=Object.values(DB);
+  document.getElementById('cnt-run').textContent  =vals.filter(d=>d.st==='running'||d.st==='ramping').length;
+  document.getElementById('cnt-stop').textContent =vals.filter(d=>d.st==='stopped').length;
+  document.getElementById('cnt-fault').textContent=vals.filter(d=>d.st==='fault'||d.st==='estop').length;
+}
+
+// Dark mode
+function toggleDark(){
+  const html=document.documentElement;
+  const dark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',dark?'light':'dark');
+  document.getElementById('darkToggle').textContent=dark?'🌙':'☀️';
+}
+
+function setZone(btn){document.querySelectorAll('.zpill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function bnav(btn){document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+
+// Clock
+function tick(){
+  const n=new Date();let h=n.getHours(),m=n.getMinutes();const ap=h>=12?'PM':'AM';
+  h=h%12||12;
+  const dy=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('clock').innerHTML=`<div>${h}:${String(m).padStart(2,'0')} ${ap}</div><div class="topbar-clock-date">${dy[n.getDay()]} ${mo[n.getMonth()]} ${n.getDate()}</div>`;
+}
+tick(); setInterval(tick,15000);
+
+// Temp drift
+setInterval(()=>{
+  document.getElementById('temp-top').textContent=(77+Math.round((Math.random()-.5)*2))+'°F';
+},3000);
+
+// Init
+updateCounts();
+selectDev('HVLS-03');
+</script>
+</body>
+</html>
