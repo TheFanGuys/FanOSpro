@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="FanOS Pro — Professional HVLS fan control system. Modern touchscreen control for industrial ceiling fans. Coming soon.">
+<meta property="og:title" content="FanOS Pro — HVLS Fan Control"/>
+<meta property="og:description" content="Professional HVLS fan control. Modern. Intuitive. Powerful."/>
+<meta property="og:type" content="website"/>
+<title>FanOS Pro — Coming Soon</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --bg:#0a0f1a;
+  --bg2:#0e1522;
+  --blue:#2a7fff;
+  --teal:#4a7aaa;
+  --text:#8a9ab0;
+  --dim:#1e3048;
+  --white:#ccdaee;
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--white);
+  font-family:'Barlow Condensed',sans-serif;
+  overflow-x:hidden;
+}
+
+/* Subtle grid background */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(42,127,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(42,127,255,.03) 1px, transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* Ambient glow */
+body::after{
+  content:'';
+  position:fixed;
+  top:20%;
+  left:50%;
+  transform:translateX(-50%);
+  width:600px;
+  height:600px;
+  background:radial-gradient(circle, rgba(42,127,255,.06) 0%, transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.page{
+  position:relative;
+  z-index:1;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:40px 24px;
+  text-align:center;
+}
+
+/* ── LOGO ── */
+.logo-wrap{
+  margin-bottom:48px;
+}
+
+/* ── FAN SVG ── */
+.fan-svg-wrap{
+  margin-bottom:32px;
+}
+
+/* ── WORDMARK ── */
+.wordmark{
+  font-size:clamp(52px, 10vw, 96px);
+  font-weight:300;
+  letter-spacing:2px;
+  line-height:1;
+  color:var(--text);
+}
+.wordmark .os{
+  color:var(--blue);
+  font-weight:400;
+}
+.wordmark .pro{
+  color:var(--blue);
+}
+
+.tagline{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(10px, 2vw, 14px);
+  letter-spacing:4px;
+  color:var(--dim);
+  text-transform:uppercase;
+  margin-top:14px;
+}
+
+/* ── DIVIDER ── */
+.divider{
+  width:min(400px, 80vw);
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--dim),transparent);
+  margin:48px auto;
+}
+
+/* ── HEADLINE ── */
+.headline{
+  font-size:clamp(28px, 6vw, 52px);
+  font-weight:300;
+  letter-spacing:1px;
+  color:var(--white);
+  margin-bottom:16px;
+  line-height:1.1;
+}
+.headline .hl{
+  color:var(--blue);
+  font-weight:400;
+}
+
+.subhead{
+  font-size:clamp(15px, 3vw, 22px);
+  font-weight:300;
+  color:var(--text);
+  max-width:520px;
+  margin:0 auto 48px;
+  line-height:1.5;
+  letter-spacing:.3px;
+}
+
+/* ── FEATURE PILLS ── */
+.features{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  justify-content:center;
+  margin-bottom:52px;
+  max-width:600px;
+}
+.feature{
+  background:rgba(42,127,255,.07);
+  border:1px solid rgba(42,127,255,.2);
+  border-radius:4px;
+  padding:8px 16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(9px, 1.8vw, 11px);
+  letter-spacing:1.5px;
+  color:var(--teal);
+  text-transform:uppercase;
+}
+
+/* ── EMAIL FORM ── */
+.notify-wrap{
+  margin-bottom:52px;
+  width:100%;
+  max-width:440px;
+}
+.notify-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:2.5px;
+  color:var(--dim);
+  text-transform:uppercase;
+  margin-bottom:12px;
+}
+.notify-form{
+  display:flex;
+  gap:8px;
+  width:100%;
+}
+.notify-input{
+  flex:1;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--dim);
+  border-radius:4px;
+  padding:12px 16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  color:var(--white);
+  outline:none;
+  transition:border-color .2s;
+  min-width:0;
+}
+.notify-input::placeholder{color:var(--dim);}
+.notify-input:focus{border-color:var(--blue);}
+.notify-btn{
+  background:var(--blue);
+  border:none;
+  border-radius:4px;
+  padding:12px 20px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  letter-spacing:2px;
+  color:#fff;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .2s;
+  flex-shrink:0;
+}
+.notify-btn:hover{background:#1a6eff;box-shadow:0 0 20px rgba(42,127,255,.4);}
+.notify-confirm{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:1.5px;
+  color:var(--blue);
+  margin-top:10px;
+  height:16px;
+  opacity:0;
+  transition:opacity .3s;
+}
+.notify-confirm.show{opacity:1;}
+
+/* ── FOOTER ── */
+.footer{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:2px;
+  color:var(--dim);
+  text-transform:uppercase;
+}
+.footer a{
+  color:var(--dim);
+  text-decoration:none;
+  transition:color .2s;
+}
+.footer a:hover{color:var(--teal);}
+
+/* Mobile responsive */
+@media(max-width:480px){
+  .notify-form{flex-direction:column;}
+  .notify-btn{width:100%;}
+  .features{gap:8px;}
+}
+
+/* Fan spin animation for the logo */
+.blade-group{
+  transform-origin:50% 50%;
+  animation:fanSpin 8s linear infinite;
+}
+@keyframes fanSpin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- LOGO -->
+  <div class="logo-wrap">
+
+    <!-- FAN SVG with motion trail -->
+    <div class="fan-svg-wrap">
+      <svg width="160" height="160" viewBox="0 0 160 160" style="overflow:visible;">
+        <defs>
+          <clipPath id="fc"><circle cx="80" cy="80" r="74"/></clipPath>
+          <radialGradient id="dk" cx="42%" cy="38%" r="68%">
+            <stop offset="0%" stop-color="#1c2c44"/>
+            <stop offset="55%" stop-color="#121e32"/>
+            <stop offset="100%" stop-color="#080e1c"/>
+          </radialGradient>
+          <linearGradient id="bl" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#1a2a3e"/>
+            <stop offset="40%" stop-color="#2e4460"/>
+            <stop offset="70%" stop-color="#3a5272"/>
+            <stop offset="100%" stop-color="#263a54"/>
+          </linearGradient>
+          <linearGradient id="bh" x1="0%" y1="100%" x2="30%" y2="0%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0)"/>
+            <stop offset="55%" stop-color="rgba(255,255,255,0.09)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.02)"/>
+          </linearGradient>
+          <linearGradient id="s1" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#2a3e58" stop-opacity=".52"/><stop offset="100%" stop-color="#1e3050" stop-opacity=".48"/></linearGradient>
+          <linearGradient id="s2" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#243650" stop-opacity=".38"/><stop offset="100%" stop-color="#1a2a44" stop-opacity=".34"/></linearGradient>
+          <linearGradient id="s3" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#1e2e48" stop-opacity=".26"/><stop offset="100%" stop-color="#16243c" stop-opacity=".22"/></linearGradient>
+          <linearGradient id="s4" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#182640" stop-opacity=".16"/><stop offset="100%" stop-color="#121e34" stop-opacity=".13"/></linearGradient>
+          <linearGradient id="s5" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#142038" stop-opacity=".09"/><stop offset="100%" stop-color="#0e1a2e" stop-opacity=".07"/></linearGradient>
+          <linearGradient id="s6" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#101a30" stop-opacity=".04"/><stop offset="100%" stop-color="#0a1428" stop-opacity=".02"/></linearGradient>
+          <radialGradient id="hg" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="#6ac0ff"/><stop offset="50%" stop-color="#2a88ff"/><stop offset="100%" stop-color="#0c3898"/></radialGradient>
+          <radialGradient id="hr" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="#2a3c56"/><stop offset="100%" stop-color="#0c1828"/></radialGradient>
+        </defs>
+
+        <circle cx="80" cy="80" r="74" fill="url(#dk)"/>
+
+        <!-- All blades spin together via animation on this group -->
+        <g class="blade-group" clip-path="url(#fc)">
+
+          <!-- Static trail ghosts at fixed angular offsets from main blades -->
+          <!-- Blade 1=270° trails at -12,-24,-36,-48,-60,-74 = 258,246,234,222,210,196 -->
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s6)" transform="rotate(-74,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s5)" transform="rotate(-60,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s4)" transform="rotate(-48,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s3)" transform="rotate(-36,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s2)" transform="rotate(-24,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s1)" transform="rotate(-12,80,80)"/>
+          <!-- Blade 2=342° -->
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s6)" transform="rotate(286,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s5)" transform="rotate(300,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s4)" transform="rotate(306,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s3)" transform="rotate(318,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s2)" transform="rotate(330,80,80)"/>
+          <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#s1)" transform="rotate(342,80,80)"/>
+          <!-- Blades 3,4,5 trails omitted for performance — main blades visible -->
+
+          <!-- Main 5 blades -->
+          <g transform="rotate(270,80,80)">
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bl)"/>
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bh)"/>
+            <path d="M85.3 8 L74.7 8 L71.5 -2 L88.5 0Z" fill="url(#bl)"/>
+            <line x1="85.3" y1="8" x2="88.5" y2="0" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+          </g>
+          <g transform="rotate(342,80,80)">
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bl)"/>
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bh)"/>
+            <path d="M85.3 8 L74.7 8 L71.5 -2 L88.5 0Z" fill="url(#bl)"/>
+            <line x1="85.3" y1="8" x2="88.5" y2="0" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+          </g>
+          <g transform="rotate(54,80,80)">
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bl)"/>
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bh)"/>
+            <path d="M85.3 8 L74.7 8 L71.5 -2 L88.5 0Z" fill="url(#bl)"/>
+            <line x1="85.3" y1="8" x2="88.5" y2="0" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+          </g>
+          <g transform="rotate(126,80,80)">
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bl)"/>
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bh)"/>
+            <path d="M85.3 8 L74.7 8 L71.5 -2 L88.5 0Z" fill="url(#bl)"/>
+            <line x1="85.3" y1="8" x2="88.5" y2="0" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+          </g>
+          <g transform="rotate(198,80,80)">
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bl)"/>
+            <path d="M80 46 L84 46 L85.3 8 L74.7 8 L76 46Z" fill="url(#bh)"/>
+            <path d="M85.3 8 L74.7 8 L71.5 -2 L88.5 0Z" fill="url(#bl)"/>
+            <line x1="85.3" y1="8" x2="88.5" y2="0" stroke="rgba(255,255,255,.18)" stroke-width=".8"/>
+          </g>
+
+          <!-- Motor housing -->
+          <circle cx="80" cy="80" r="18" fill="#06101e" stroke="#1e3050" stroke-width="1.5"/>
+          <circle cx="80" cy="80" r="12" fill="#0a1828" stroke="#162840" stroke-width="1"/>
+          <circle cx="80" cy="80" r="8" fill="url(#hr)"/>
+        </g>
+
+        <!-- Hub on top — doesn't spin -->
+        <circle cx="80" cy="80" r="5.5" fill="url(#hg)"/>
+        <circle cx="80" cy="80" r="2.4" fill="#c8eeff" opacity=".8"/>
+        <ellipse cx="78" cy="78" rx="1.4" ry=".9" fill="rgba(255,255,255,.55)" transform="rotate(-35,78,78)"/>
+
+        <!-- Outer ring -->
+        <circle cx="80" cy="80" r="74" fill="none" stroke="#4a7aaa" stroke-width="2" opacity=".9"/>
+        <circle cx="80" cy="80" r="72" fill="none" stroke="#6a9acc" stroke-width=".5" opacity=".3"/>
+      </svg>
+    </div>
+
+    <!-- Wordmark -->
+    <div class="wordmark">
+      Fan<span class="os">OS</span><span class="pro"> Pro</span>
+    </div>
+    <div class="tagline">Professional HVLS Fan Control System</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- HEADLINE -->
+  <h1 class="headline">
+    Modern fan control.<br>
+    <span class="hl">Coming soon.</span>
+  </h1>
+
+  <p class="subhead">
+    Floor plan visualization, real-time monitoring, mobile access, and Modbus RTU control for any HVLS fan system. Built for the facilities and installers who need it most.
+  </p>
+
+  <!-- FEATURE PILLS -->
+  <div class="features">
+    <div class="feature">Floor Plan View</div>
+    <div class="feature">Any Touchscreen</div>
+    <div class="feature">Mobile Access</div>
+    <div class="feature">Modbus RTU</div>
+    <div class="feature">30 Fans</div>
+    <div class="feature">Zone Control</div>
+    <div class="feature">Scheduling</div>
+    <div class="feature">Fault Alerts</div>
+    <div class="feature">Remote Monitoring</div>
+    <div class="feature">DWG Import</div>
+  </div>
+
+  <!-- EMAIL NOTIFY FORM -->
+  <div class="notify-wrap">
+    <div class="notify-label">Get notified at launch</div>
+    <div class="notify-form">
+      <input class="notify-input" type="email" id="emailInput"
+             placeholder="your@email.com" autocomplete="email"/>
+      <button class="notify-btn" onclick="handleNotify()">NOTIFY ME</button>
+    </div>
+    <div class="notify-confirm" id="confirmMsg">
+      ✓ You're on the list. We'll be in touch.
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    &copy; 2026 FanOS Pro &nbsp;·&nbsp;
+    <a href="mailto:info@fanospro.com">info@fanospro.com</a>
+    &nbsp;·&nbsp; fanospro.com &nbsp;·&nbsp; fanospro.app
+  </div>
+
+</div>
+
+<script>
+async function handleNotify() {
+  const input = document.getElementById('emailInput');
+  const confirm = document.getElementById('confirmMsg');
+  const btn = document.querySelector('.notify-btn');
+  const email = input.value.trim();
+
+  // Basic validation
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    input.style.borderColor = '#f44336';
+    setTimeout(() => input.style.borderColor = '', 1500);
+    return;
+  }
+
+  // Disable button while submitting
+  btn.textContent = 'SENDING...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('https://api.brevo.com/v3/contacts', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'api-key': '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'
+      },
+      body: JSON.stringify({
+        email: email,
+        listIds: [5],
+        updateEnabled: true
+      })
+    });
+
+    // 200 = created, 204 = already exists (updated) — both are success
+    if (response.ok || response.status === 204) {
+      input.value = '';
+      confirm.textContent = '✓ You\'re on the list. We\'ll be in touch.';
+      confirm.style.color = 'var(--blue)';
+      confirm.classList.add('show');
+      setTimeout(() => confirm.classList.remove('show'), 6000);
+    } else {
+      const err = await response.json();
+      // Handle duplicate contact gracefully
+      if (err.code === 'duplicate_parameter') {
+        input.value = '';
+        confirm.textContent = '✓ You\'re already on the list!';
+        confirm.style.color = 'var(--blue)';
+        confirm.classList.add('show');
+        setTimeout(() => confirm.classList.remove('show'), 4000);
+      } else {
+        confirm.textContent = '✗ Something went wrong. Try again.';
+        confirm.style.color = '#f44336';
+        confirm.classList.add('show');
+        setTimeout(() => confirm.classList.remove('show'), 4000);
+      }
+    }
+  } catch (e) {
+    confirm.textContent = '✗ Connection error. Try again.';
+    confirm.style.color = '#f44336';
+    confirm.classList.add('show');
+    setTimeout(() => confirm.classList.remove('show'), 4000);
+  }
+
+  btn.textContent = 'NOTIFY ME';
+  btn.disabled = false;
+}
+
+// Enter key submits
+document.getElementById('emailInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') handleNotify();
+});
+</script>
+
+</body>
+</html>
