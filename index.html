@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="FanOS Pro - Professional Air Movement Control System">
+<title>FanOS Pro | Air Movement Control</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f5f7; --surface:#ffffff; --surface2:#f9f9fb;
+  --border:rgba(0,0,0,0.08); --border2:rgba(0,0,0,0.05);
+  --navy:#1d2b3a; --navy-mid:#4a5f72; --navy-dim:#8a9ab0;
+  --fp-bg:#1a1e24; --fp-dot:rgba(255,255,255,0.0); --lbl-bg:rgba(0,0,0,0.55);
+  --blue:#0071e3; --green:#28c840; --yellow:#e6ac00; --red:#ff3b30; --grey:#b0bec5;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --sans:'DM Sans',-apple-system,sans-serif; --mono:'DM Mono',monospace;
+}
+[data-theme="dark"] {
+  --bg:#111418; --surface:#1c2128; --surface2:#222830;
+  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.05);
+  --navy:#e8eef5; --navy-mid:#9aafc4; --navy-dim:#4a6070;
+  --fp-bg:#151a20; --fp-dot:rgba(200,220,255,0.06); --lbl-bg:rgba(28,33,40,0.92);
+  --blue:#4a9eff; --green:#30d158; --yellow:#ffd60a; --red:#ff453a; --grey:#4a6070;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+html{height:100%;background:var(--bg);}
+body{
+  height:100%; min-height:100dvh;
+  overflow:hidden;background:var(--bg);
+  font-family:var(--sans);color:var(--navy);
+  transition:background 0.3s,color 0.3s;
+}
+.app{
+  display:flex;flex-direction:column;
+  height:100dvh; /* dynamic viewport height - fixes Safari landscape */
+  max-height:100dvh;
+}
+
+/* logo-spin removed - using PNG logo */
+@keyframes sdot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(40,200,64,0.4);}50%{box-shadow:0 0 0 4px rgba(40,200,64,0.1);}}
+@keyframes fault-flash{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* -- TOPBAR -- */
+.topbar{
+  display:flex;align-items:center;padding:0 12px;height:48px;gap:8px;
+  background:var(--surface);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);flex-shrink:0;z-index:200;
+}
+.logo-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.logo-text{font-size:15px;font-weight:700;letter-spacing:-0.3px;color:var(--navy);}
+.logo-text span{color:var(--blue);}
+.logo-badge{font-size:8px;font-weight:700;background:var(--blue);color:#fff;padding:2px 4px;border-radius:3px;}
+.t-div{width:1px;height:26px;background:var(--border);flex-shrink:0;}
+.topbar-site{flex:1;min-width:0;}
+.site-name{font-size:12px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.site-loc{font-size:9px;color:var(--navy-dim);}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.status-pill{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:500;color:#1a8a35;
+  background:#e6faea;border:1px solid rgba(40,200,64,0.25);border-radius:20px;padding:2px 8px 2px 5px;}
+[data-theme="dark"] .status-pill{color:#30d158;background:rgba(48,209,88,0.12);border-color:rgba(48,209,88,0.2);}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:sdot-pulse 2s ease-in-out infinite;}
+.topbar-clock{font-family:var(--mono);font-size:10px;color:var(--navy-mid);text-align:right;line-height:1.3;
+  display:none;} /* hidden on mobile, shown on desktop */
+@media(min-width:640px){.topbar-clock{display:block;}}
+.topbar-clock-date{font-size:8px;color:var(--navy-dim);}
+.dark-toggle{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:15px;flex-shrink:0;}
+
+/* Power meter in topbar */
+.power-badge{
+  display:flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--blue);background:rgba(0,113,227,0.08);
+  border:1px solid rgba(0,113,227,0.18);border-radius:6px;
+  padding:3px 7px;white-space:nowrap;flex-shrink:0;
+}
+.power-badge-icon{font-size:11px;}
+
+/* -- CTRL BAR -- */
+.ctrl-bar{
+  display:flex;align-items:stretch;background:var(--surface);
+  border-bottom:1px solid var(--border);flex-shrink:0;
+  height:46px;overflow:hidden;
+}
+/* On narrow screens, group stats + global btns together and allow scroll */
+.stat-group{
+  display:flex;align-items:stretch;flex-shrink:0;
+  border-right:1px solid var(--border);
+}
+.stat-item{
+  display:flex;align-items:center;gap:5px;padding:0 10px;
+  cursor:pointer;transition:background 0.1s;
+}
+.stat-item:hover{background:var(--bg);}
+.stat-num{font-size:18px;font-weight:700;letter-spacing:-0.5px;line-height:1;}
+.stat-lbl{font-size:7px;font-weight:600;letter-spacing:0.5px;color:var(--navy-dim);text-transform:uppercase;margin-top:1px;}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.stat-div{width:1px;background:var(--border);margin:8px 0;}
+
+/* fault stat flashes when count > 0 */
+.stat-item.has-fault .stat-num{animation:fault-flash 1.2s ease-in-out infinite;}
+
+.global-btns{display:flex;align-items:center;gap:5px;padding:0 8px;border-right:1px solid var(--border);flex-shrink:0;}
+.g-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:7px;border:none;
+  font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.12s;white-space:nowrap;}
+.g-btn-on{background:var(--green);color:#fff;}
+.g-btn-on:hover{filter:brightness(1.08);}
+.g-btn-off{background:rgba(255,59,48,0.1);color:var(--red);border:1px solid rgba(255,59,48,0.2);}
+.g-btn-off:hover{background:var(--red);color:#fff;}
+
+/* Zone dropdown */
+.zone-dropdown-wrap{display:flex;align-items:center;padding:0 8px;flex-shrink:0;}
+.zone-dropdown{
+  padding:5px 10px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);font-family:var(--sans);font-size:11px;
+  font-weight:600;color:var(--navy-mid);cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  padding-right:24px;
+}
+
+/* -- SPEED BAR - horizontal scroll on mobile -- */
+.speed-bar{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  flex-shrink:0;height:38px;
+  padding:0 8px;
+  overflow-x:auto;overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;white-space:nowrap;
+}
+.speed-bar::-webkit-scrollbar{display:none;}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;
+  color:var(--navy-dim);flex-shrink:0;}
+.sb-divider{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px;}
+.sb-group{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;}
+.sb-group-lbl{font-size:9px;font-weight:700;color:var(--navy-dim);letter-spacing:0.3px;flex-shrink:0;}
+.spd-btn{
+  padding:3px 9px;border-radius:5px;border:1px solid var(--border);
+  background:var(--surface);font-family:var(--sans);font-size:10px;font-weight:600;
+  color:var(--navy-mid);cursor:pointer;transition:all 0.12s;white-space:nowrap;flex-shrink:0;
+}
+.spd-btn:active{transform:scale(0.95);}
+.spd-btn.lo.active{background:rgba(0,113,227,0.12);border-color:var(--blue);color:var(--blue);}
+.spd-btn.md.active{background:rgba(40,200,64,0.12);border-color:var(--green);color:var(--green);}
+.spd-btn.hi.active{background:rgba(255,59,48,0.1);border-color:var(--red);color:var(--red);}
+
+/* Type-specific all-on/off section in speed bar */
+.type-btns{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;}
+.type-btn{
+  padding:3px 8px;border-radius:5px;border:1px solid var(--border);
+  background:var(--surface);font-family:var(--sans);font-size:9px;font-weight:600;
+  color:var(--navy-mid);cursor:pointer;transition:all 0.12s;white-space:nowrap;flex-shrink:0;
+}
+.type-btn.on-btn:active,.type-btn.on-btn:hover{background:rgba(40,200,64,0.12);border-color:var(--green);color:var(--green);}
+.type-btn.off-btn:active,.type-btn.off-btn:hover{background:rgba(255,59,48,0.1);border-color:var(--red);color:var(--red);}
+
+/* -- BODY -- */
+.body{flex:1;display:flex;overflow:hidden;min-height:0;}
+
+/* -- FLOOR PLAN -- */
+.floorplan{
+  flex:1;position:relative;overflow:hidden;
+  background:var(--fp-bg);transition:background 0.3s;
+  min-width:0;
+}
+/* dot grid removed - CAD SVG covers full area */
+.fp-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+
+/* zone overlay border - shown when zone is selected */
+.zone-overlay{
+  position:absolute;pointer-events:none;z-index:5;
+  border:2px solid rgba(148,0,255,0.5);border-radius:8px;
+  background:rgba(148,0,255,0.03);
+  transition:all 0.3s;display:none;
+}
+.zone-overlay.visible{display:block;}
+
+/* -- DEVICE NODES -- */
+.dev{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  cursor:pointer;z-index:10;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation; /* allows tap, prevents double-tap zoom */
+}
+.dev-icon-wrap{
+  transition:none;display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,0.13));
+}
+.dev-icon-wrap svg{
+  transform-origin:50% 50%;
+  display:block;
+}
+.dev:hover .dev-icon-wrap,.dev:active .dev-icon-wrap{transform:scale(1.15);}
+.dev.selected .dev-icon-wrap{transform:scale(1.2);filter:drop-shadow(0 0 8px rgba(0,113,227,0.55));}
+.dev.dragging{opacity:0.7;z-index:50;cursor:grabbing;}
+.dev.estop .dev-icon-wrap{animation:fault-flash 0.8s ease-in-out infinite;}
+
+.dev-lbl-id{
+  font-size:7px;font-weight:600;color:#ddeeff;text-align:center;
+  white-space:nowrap;background:var(--lbl-bg);padding:1px 3px;border-radius:3px;line-height:1.3;
+}
+.dev-lbl-st{font-family:var(--mono);font-size:6px;text-align:center;line-height:1;}
+
+/* Edit mode indicator */
+.edit-mode-banner{
+  display:none;position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  background:var(--blue);color:#fff;border-radius:20px;
+  padding:5px 16px;font-size:11px;font-weight:600;z-index:30;
+  box-shadow:0 4px 16px rgba(0,113,227,0.3);
+}
+.edit-mode .edit-mode-banner{display:block;}
+.edit-mode .dev{cursor:grab;touch-action:none;}
+
+/* -- FAULT LIST MODAL -- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.2s;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-sheet{
+  background:var(--surface);border-radius:16px 16px 0 0;
+  width:100%;max-width:480px;max-height:70vh;
+  overflow-y:auto;padding:0;
+  transform:translateY(20px);transition:transform 0.25s;
+}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-header{
+  position:sticky;top:0;background:var(--surface);
+  padding:16px 20px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;z-index:1;
+}
+.modal-title{font-size:16px;font-weight:700;color:var(--navy);}
+.modal-close{font-size:20px;color:var(--navy-dim);cursor:pointer;padding:4px;}
+.fault-item{
+  padding:12px 20px;border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:12px;cursor:pointer;
+}
+.fault-item:hover{background:var(--bg);}
+.fault-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;animation:fault-flash 1s ease-in-out infinite;}
+.fault-item-name{font-size:13px;font-weight:600;color:var(--navy);}
+.fault-item-code{font-family:var(--mono);font-size:11px;color:var(--red);margin-top:2px;}
+.fault-item-zone{font-size:10px;color:var(--navy-dim);margin-top:1px;}
+.fault-item-right{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--navy-dim);}
+
+/* -- DETAIL PANEL -- */
+.detail{
+  width:0;background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+  transition:width 0.26s cubic-bezier(0.4,0,0.2,1);
+}
+.detail.open{width:252px;}
+@media(max-width:500px){
+  .detail.open{
+    position:fixed;right:0;top:0;bottom:0;width:100% !important;
+    z-index:300;border-left:none;
+    box-shadow:-4px 0 24px rgba(0,0,0,0.15);
+  }
+}
+.detail-inner{padding:14px;overflow-y:auto;flex:1;position:relative;min-width:252px;}
+.det-close{
+  position:absolute;top:0;right:0;width:30px;height:30px;border-radius:50%;
+  background:var(--bg);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;color:var(--navy-dim);
+}
+.det-name{font-size:20px;font-weight:700;letter-spacing:-0.4px;padding-right:34px;color:var(--navy);}
+.det-zone{font-size:10px;color:var(--navy-dim);margin-top:2px;}
+.det-status{display:flex;align-items:center;gap:7px;margin-top:10px;padding:8px 11px;border-radius:9px;}
+.det-status.running{background:rgba(40,200,64,0.1);}
+.det-status.stopped{background:var(--surface2);}
+.det-status.ramping{background:rgba(0,113,227,0.1);}
+.det-status.reversing{background:rgba(0,113,227,0.08);}
+.det-status.fault  {background:rgba(230,172,0,0.12);}
+.det-status.estop  {background:rgba(255,59,48,0.1);}
+.det-sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.det-slbl{font-size:12px;font-weight:600;}
+.det-slbl.running{color:var(--green);} .det-slbl.stopped{color:var(--navy-mid);}
+.det-slbl.ramping,.det-slbl.reversing{color:var(--blue);} .det-slbl.fault{color:var(--yellow);} .det-slbl.estop{color:var(--red);}
+
+/* Voltage badge */
+.voltage-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--navy-mid);background:var(--surface2);
+  border:1px solid var(--border);border-radius:5px;padding:2px 7px;
+  margin-top:6px;
+}
+
+.speed-big{font-size:36px;font-weight:700;letter-spacing:-1.5px;line-height:1;margin-top:12px;color:var(--navy);}
+.speed-unit{font-size:15px;font-weight:400;color:var(--navy-mid);}
+.speed-hz{font-family:var(--mono);font-size:10px;color:var(--navy-dim);margin-top:2px;}
+
+/* Speed track with "accepted" flash */
+.speed-track{
+  height:5px;background:var(--surface2);border:1px solid var(--border2);
+  border-radius:3px;margin:10px 0 5px;cursor:pointer;position:relative;overflow:visible;
+}
+.speed-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#4a9eff,var(--blue));
+  position:relative;
+  transition:width 0.15s ease; /* fast for immediate feedback */
+}
+.speed-fill.accepted{background:linear-gradient(90deg,var(--green),#1a8a35);}
+.speed-fill::after{
+  content:'';position:absolute;right:-5px;top:-3.5px;width:12px;height:12px;
+  background:var(--blue);border-radius:50%;border:2.5px solid var(--surface);
+  box-shadow:0 1px 4px rgba(0,113,227,0.4);
+}
+.speed-fill.accepted::after{background:var(--green);}
+.speed-range{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--navy-dim);}
+.preset-row{display:flex;gap:4px;margin-top:8px;}
+.preset-btn{flex:1;padding:5px 0;border-radius:6px;border:1px solid var(--border);background:var(--surface2);
+  font-family:var(--sans);font-size:11px;font-weight:600;color:var(--navy-mid);cursor:pointer;transition:all 0.12s;text-align:center;}
+.preset-btn:hover,.preset-btn:active{border-color:var(--blue);color:var(--blue);}
+.preset-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+.det-sec-lbl{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:12px 0 5px;}
+.data-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border2);}
+.data-row:last-child{border-bottom:none;}
+.dr-lbl{font-size:11px;color:var(--navy-mid);}
+.dr-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--navy);}
+.dr-val.ok{color:var(--green);} .dr-val.warn{color:var(--yellow);} .dr-val.bad{color:var(--red);}
+
+/* Direction row - HVLS only */
+.dir-row{display:flex;gap:4px;}
+.dir-btn{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);
+  font-family:var(--sans);font-size:11px;font-weight:600;color:var(--navy-mid);cursor:pointer;
+  transition:all 0.12s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.dir-btn.active{background:var(--navy);border-color:var(--navy);color:#fff;}
+[data-theme="dark"] .dir-btn.active{background:var(--blue);border-color:var(--blue);}
+
+.det-actions{display:flex;gap:5px;margin-top:12px;}
+.det-btn{flex:1;padding:9px 0;border-radius:7px;border:none;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.12s;}
+.det-btn-start{background:var(--green);color:#fff;}
+.det-btn-start:hover{filter:brightness(1.08);}
+.det-btn-stop{background:var(--surface2);color:var(--navy-mid);border:1px solid var(--border);}
+.det-btn-stop:hover{background:rgba(255,59,48,0.1);color:var(--red);border-color:rgba(255,59,48,0.3);}
+.fault-btn{width:100%;margin-top:6px;padding:8px;border-radius:7px;
+  border:1px solid rgba(230,172,0,0.4);background:rgba(230,172,0,0.1);color:var(--yellow);
+  font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.12s;}
+.fault-btn:hover{background:var(--yellow);color:#000;}
+
+/* LEGEND */
+.legend{
+  position:absolute;bottom:8px;left:8px;display:flex;gap:8px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--border);border-radius:7px;
+  padding:5px 8px;z-index:20;
+}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:8px;font-weight:500;color:var(--navy-mid);}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* TOAST */
+.start-toast{
+  position:fixed;bottom:calc(58px + var(--safe-bottom));left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--navy);color:#fff;border-radius:12px;
+  padding:10px 14px;display:flex;align-items:center;gap:10px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);z-index:400;
+  opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;
+  min-width:240px;max-width:90vw;
+}
+[data-theme="dark"] .start-toast{background:var(--surface);border:1px solid var(--border);}
+.start-toast.visible{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+.toast-icon{font-size:16px;flex-shrink:0;}
+.toast-body{flex:1;min-width:0;}
+.toast-title{font-size:11px;font-weight:600;color:#fff;line-height:1.2;}
+[data-theme="dark"] .toast-title{color:var(--navy);}
+.toast-sub{font-size:9px;color:rgba(255,255,255,0.6);margin-top:1px;font-family:var(--mono);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+[data-theme="dark"] .toast-sub{color:var(--navy-dim);}
+.toast-prog{height:3px;background:rgba(255,255,255,0.2);border-radius:2px;margin-top:5px;overflow:hidden;}
+.toast-prog-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s linear;}
+.toast-cancel{font-size:10px;font-weight:600;color:rgba(255,255,255,0.5);cursor:pointer;
+  white-space:nowrap;flex-shrink:0;padding:3px 6px;border-radius:5px;}
+.toast-cancel:hover{background:rgba(255,255,255,0.1);color:#fff;}
+
+/* FA INTERLOCK BANNER */
+.fa-banner{
+  position:fixed;top:0;left:0;right:0;z-index:600;
+  background:var(--red);color:#fff;text-align:center;
+  padding:10px 16px;font-size:13px;font-weight:700;letter-spacing:0.5px;
+  display:none;animation:fault-flash 1s ease-in-out infinite;
+}
+.fa-banner.active{display:block;}
+
+/* BOTTOM NAV */
+.bottom-nav{
+  display:flex;align-items:stretch;
+  height:calc(50px + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  background:var(--surface);border-top:1px solid var(--border);
+  flex-shrink:0;
+}
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;cursor:pointer;color:var(--navy-dim);font-size:8px;font-weight:500;
+  transition:color 0.12s;border:none;background:none;font-family:var(--sans);
+  -webkit-tap-highlight-color:transparent;padding-bottom:2px;
+}
+.bnav-item.active{color:var(--blue);}
+.bnav-badge{position:relative;}
+.bnav-badge::after{
+  content:'1';position:absolute;top:-5px;right:-9px;background:var(--red);
+  color:#fff;font-size:7px;font-weight:700;width:13px;height:13px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;border:1.5px solid var(--surface);
+}
+
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* LANDSCAPE TWEAKS */
+@media(orientation:landscape) and (max-height:500px){
+  .topbar{height:40px;}
+  .ctrl-bar{height:38px;}
+  .speed-bar{height:32px;}
+  .bottom-nav{height:calc(44px + var(--safe-bottom));}
+  .stat-num{font-size:15px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- FA INTERLOCK BANNER -->
+<div class="fa-banner" id="faBanner">&#9888; FIRE ALARM INTERLOCK -- ALL FANS STOPPED -- CONTACT FACILITY MANAGEMENT</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap" style="flex-direction:column;align-items:flex-start;gap:1px;">
+    <img src="fanospro-logo.png"
+         alt="FanOS Pro - Air Movement Control"
+         style="height:30px;width:auto;object-fit:contain;display:block;"
+         onerror="this.style.display='none';document.getElementById('logo-fallback').style.display='flex';"
+    />
+    <div style="font-size:7px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--navy-dim);white-space:nowrap;padding-left:1px;">Air Movement Control</div>
+    <!-- Fallback if image not found -->
+    <div id="logo-fallback" style="display:none;align-items:center;gap:6px;">
+      <div class="logo-text">Fan<span>OS</span></div>
+      <div class="logo-badge">PRO</div>
+    </div>
+  </div>
+  <div class="t-div"></div>
+  <div class="topbar-site">
+    <div class="site-name">Acme Manufacturing</div>
+    <div class="site-loc">Main Warehouse</div>
+  </div>
+  <div class="topbar-right">
+    <div class="power-badge" id="powerBadge">
+      <span class="power-badge-icon">&#9889;</span>
+      <span id="totalPower">42.6 kW</span>
+    </div>
+    <div class="status-pill"><div class="sdot"></div><span>Normal</span></div>
+    <div class="topbar-clock" id="clock"><div>9:18 AM</div><div class="topbar-clock-date">Thu May 21</div></div>
+    <div class="dark-toggle" id="darkToggle" onclick="toggleDark()">&#127769;</div>
+  </div>
+</div>
+
+<!-- CTRL BAR -->
+<div class="ctrl-bar">
+  <div class="stat-group">
+    <div class="stat-item" id="statRunItem" onclick="openFaultModal('running')">
+      <div class="stat-dot" style="background:var(--green)"></div>
+      <div><div class="stat-num" id="cnt-run" style="color:var(--green)">18</div><div class="stat-lbl">Run</div></div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item" onclick="openFaultModal('stopped')">
+      <div class="stat-dot" style="background:var(--grey)"></div>
+      <div><div class="stat-num" id="cnt-stop" style="color:var(--navy-mid)">4</div><div class="stat-lbl">Stop</div></div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item has-fault" id="faultStatItem" onclick="openFaultModal('fault')">
+      <div class="stat-dot" style="background:var(--yellow)"></div>
+      <div><div class="stat-num" id="cnt-fault" style="color:var(--yellow)">1</div><div class="stat-lbl">Fault</div></div>
+    </div>
+    <div class="stat-div"></div>
+    <div class="stat-item">
+      <div class="stat-dot" style="background:var(--blue)"></div>
+      <div><div class="stat-num" id="temp-top" style="color:var(--blue)">77°F</div><div class="stat-lbl">Temp</div></div>
+    </div>
+  </div>
+
+  <div class="global-btns">
+    <button class="g-btn g-btn-on" onclick="allFansOn()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>All ON
+    </button>
+    <button class="g-btn g-btn-off" onclick="allFansOff()">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>All OFF
+    </button>
+  </div>
+
+  <div class="zone-dropdown-wrap">
+    <select class="zone-dropdown" id="zoneDropdown" onchange="filterZone(this.value)">
+      <option value="all">All Zones</option>
+      <option value="Zone A">Zone A</option>
+      <option value="Zone B">Zone B</option>
+      <option value="Zone C">Zone C</option>
+    </select>
+  </div>
+</div>
+
+<!-- SPEED BAR — zone selector + staggered speed presets -->
+<div class="speed-bar" id="speedBar">
+  <span class="sb-label">Zone</span>
+  <select class="zone-dropdown" id="speedZoneSelect" onchange="onSpeedZoneChange(this.value)"
+    style="margin:0 4px;padding:3px 22px 3px 8px;height:26px;font-size:10px;">
+    <option value="all">All Zones</option>
+    <option value="Zone A">Zone A</option>
+    <option value="Zone B">Zone B</option>
+    <option value="Zone C">Zone C</option>
+  </select>
+  <div class="sb-divider"></div>
+  <button class="g-btn g-btn-on" style="font-size:10px;padding:4px 10px;" onclick="zoneBarOn()">ON</button>
+  <button class="g-btn g-btn-off" style="font-size:10px;padding:4px 10px;margin-left:3px;" onclick="zoneBarOff()">OFF</button>
+  <div class="sb-divider"></div>
+  <span class="sb-label">Speed</span>
+  <button class="spd-btn lo" onclick="zoneBarSpeed(33,this)">Low</button>
+  <button class="spd-btn md" onclick="zoneBarSpeed(65,this)">Med</button>
+  <button class="spd-btn hi" onclick="zoneBarSpeed(100,this)">High</button>
+  <div class="sb-divider"></div>
+  <span class="sb-label" style="font-size:8px;color:var(--navy-dim);">HVLS Fans</span>
+  <button class="type-btn on-btn"  onclick="typeCommandStagger('hvls','on')">ON</button>
+  <button class="type-btn off-btn" onclick="typeCommandStagger('hvls','off')">OFF</button>
+  <div class="sb-divider"></div>
+  <span class="sb-label" style="font-size:8px;color:var(--navy-dim);">Exhaust</span>
+  <button class="type-btn on-btn"  onclick="typeCommandStagger('exhaust','on')">ON</button>
+  <button class="type-btn off-btn" onclick="typeCommandStagger('exhaust','off')">OFF</button>
+</div>
+
+<!-- BODY -->
+<div class="body">
+<div class="floorplan" id="fp">
+
+  <!-- Zone overlay border -->
+  <div class="zone-overlay" id="zoneOverlay"></div>
+
+  <!-- Edit mode banner -->
+  <div class="edit-mode-banner" id="editBanner">
+    ✏ Edit Mode — Drag fans to reposition · Tap outside to exit
+  </div>
+
+  <!-- CAD Floor Plan — dark theme like AutoCAD, full canvas coverage -->
+  <svg class="fp-svg" viewBox="0 0 1000 660" preserveAspectRatio="none"
+       style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
+    <defs>
+      <!-- Rack storage hatch pattern -->
+      <pattern id="rack" width="18" height="12" patternUnits="userSpaceOnUse">
+        <rect width="18" height="12" fill="none"/>
+        <rect x="1" y="1" width="16" height="10" fill="none" stroke="rgba(160,80,40,0.7)" stroke-width="0.6"/>
+        <line x1="1" y1="6" x2="17" y2="6" stroke="rgba(160,80,40,0.5)" stroke-width="0.4"/>
+      </pattern>
+      <!-- Parking lot line pattern -->
+      <pattern id="parking" width="30" height="60" patternUnits="userSpaceOnUse">
+        <rect width="30" height="60" fill="none"/>
+        <line x1="0" y1="0" x2="0" y2="60" stroke="rgba(200,200,100,0.4)" stroke-width="0.8"/>
+      </pattern>
+    </defs>
+
+    <!-- ── OUTER SITE / PARKING (full canvas background) ── -->
+    <rect x="0" y="0" width="1000" height="660" fill="#1a1e24"/>
+    <!-- Parking lot left of building -->
+    <rect x="0" y="0" width="32" height="660" fill="#222830"/>
+    <!-- Parking lot right -->
+    <rect x="968" y="0" width="32" height="660" fill="#222830"/>
+    <!-- Parking stall lines top area (above building) -->
+    <rect x="0" y="0" width="1000" height="20" fill="#1e2530"/>
+
+    <!-- ── MAIN BUILDING SHELL ── -->
+    <!-- Outer wall thick -->
+    <rect x="32" y="20" width="936" height="610" fill="#252c38" rx="0"/>
+    <!-- Inner floor area (slightly lighter) -->
+    <rect x="38" y="26" width="924" height="598" fill="#2a3240" rx="0"/>
+
+    <!-- ── GREEN LANDSCAPE STRIP (top, like reference image) ── -->
+    <rect x="32" y="20" width="936" height="42" fill="#1e3d20"/>
+    <!-- Trees/shrubs suggestion -->
+    <ellipse cx="100" cy="38" rx="22" ry="12" fill="#2a5c2a" opacity="0.8"/>
+    <ellipse cx="180" cy="36" rx="18" ry="11" fill="#347034" opacity="0.7"/>
+    <ellipse cx="270" cy="40" rx="25" ry="13" fill="#2a5c2a" opacity="0.8"/>
+    <ellipse cx="380" cy="37" rx="20" ry="11" fill="#347034" opacity="0.75"/>
+    <ellipse cx="480" cy="39" rx="24" ry="12" fill="#2a5c2a" opacity="0.8"/>
+    <ellipse cx="580" cy="36" rx="19" ry="11" fill="#347034" opacity="0.7"/>
+    <ellipse cx="680" cy="40" rx="22" ry="13" fill="#2a5c2a" opacity="0.8"/>
+    <ellipse cx="800" cy="37" rx="20" ry="11" fill="#347034" opacity="0.75"/>
+    <ellipse cx="900" cy="39" rx="22" ry="12" fill="#2a5c2a" opacity="0.8"/>
+    <!-- Landscape border line -->
+    <line x1="32" y1="62" x2="968" y2="62" stroke="#3a6b3a" stroke-width="1.5"/>
+
+    <!-- ── OUTER BUILDING WALL LINES ── -->
+    <rect x="32" y="62" width="936" height="568" fill="none"
+          stroke="#9090d0" stroke-width="2.5"/>
+
+    <!-- ── MAIN WAREHOUSE FLOOR (left 56%) ── -->
+    <rect x="38" y="68" width="530" height="556" fill="#28303e"/>
+    <!-- Rack storage rows — left warehouse zone -->
+    <!-- Row 1 -->
+    <rect x="50" y="80" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="80" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 2 -->
+    <rect x="50" y="148" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="148" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 3 -->
+    <rect x="50" y="216" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="216" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 4 -->
+    <rect x="50" y="284" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="284" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 5 -->
+    <rect x="50" y="352" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="352" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 6 -->
+    <rect x="50" y="420" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="420" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 7 -->
+    <rect x="50" y="488" width="505" height="58" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="488" width="505" height="58" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+    <!-- Row 8 -->
+    <rect x="50" y="556" width="505" height="54" fill="url(#rack)" opacity="0.85"/>
+    <rect x="50" y="556" width="505" height="54" fill="none" stroke="rgba(160,80,40,0.6)" stroke-width="0.8"/>
+
+    <!-- Aisle lines between rack rows (cyan like reference) -->
+    <line x1="50" y1="138" x2="555" y2="138" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+    <line x1="50" y1="206" x2="555" y2="206" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+    <line x1="50" y1="274" x2="555" y2="274" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+    <line x1="50" y1="342" x2="555" y2="342" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+    <line x1="50" y1="410" x2="555" y2="410" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+    <line x1="50" y1="478" x2="555" y2="478" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+    <line x1="50" y1="546" x2="555" y2="546" stroke="#00aaaa" stroke-width="0.6" opacity="0.5"/>
+
+    <!-- Staging/pickup areas (cyan rectangles like reference) -->
+    <rect x="200" y="170" width="80" height="22" fill="#007acc" opacity="0.7" rx="1"/>
+    <rect x="200" y="170" width="80" height="22" fill="none" stroke="#00aaff" stroke-width="0.8"/>
+    <rect x="200" y="370" width="80" height="22" fill="#007acc" opacity="0.7" rx="1"/>
+    <rect x="200" y="370" width="80" height="22" fill="none" stroke="#00aaff" stroke-width="0.8"/>
+    <rect x="200" y="570" width="80" height="22" fill="#007acc" opacity="0.7" rx="1"/>
+    <rect x="200" y="570" width="80" height="22" fill="none" stroke="#00aaff" stroke-width="0.8"/>
+
+    <!-- ── CENTER DIVIDER WALL ── -->
+    <line x1="572" y1="62" x2="572" y2="630" stroke="#9090d0" stroke-width="2"/>
+
+    <!-- ── RIGHT SIDE — Office / Receiving / Mezz areas ── -->
+    <!-- Top office / receiving block -->
+    <rect x="578" y="68" width="384" height="180" fill="#303848"/>
+    <rect x="578" y="68" width="384" height="180" fill="none" stroke="#6060a0" stroke-width="1.2"/>
+    <!-- Office interior partition -->
+    <line x1="578" y1="148" x2="962" y2="148" stroke="#6060a0" stroke-width="1"/>
+    <line x1="720" y1="68" x2="720" y2="248" stroke="#6060a0" stroke-width="1"/>
+    <!-- Green carpet area (office) -->
+    <rect x="722" y="70" width="238" height="76" fill="#1e4020" opacity="0.8"/>
+    <rect x="722" y="70" width="238" height="76" fill="none" stroke="#3a6b3a" stroke-width="0.8"/>
+    <!-- Desks suggestion -->
+    <rect x="735" y="80" width="30" height="20" fill="#2a5530" rx="2"/>
+    <rect x="780" y="80" width="30" height="20" fill="#2a5530" rx="2"/>
+    <rect x="825" y="80" width="30" height="20" fill="#2a5530" rx="2"/>
+    <rect x="870" y="80" width="30" height="20" fill="#2a5530" rx="2"/>
+    <!-- Stairs top right -->
+    <rect x="850" y="150" width="108" height="94" fill="#383848" stroke="#6060a0" stroke-width="0.8"/>
+    <line x1="858" y1="158" x2="950" y2="158" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="166" x2="950" y2="166" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="174" x2="950" y2="174" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="182" x2="950" y2="182" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="190" x2="950" y2="190" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="198" x2="950" y2="198" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="206" x2="950" y2="206" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="214" x2="950" y2="214" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="222" x2="950" y2="222" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="230" x2="950" y2="230" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="858" y1="238" x2="950" y2="238" stroke="#8888c0" stroke-width="0.5"/>
+
+    <!-- Mid-right receiving / staging bays -->
+    <rect x="578" y="250" width="384" height="150" fill="#2c3442"/>
+    <rect x="578" y="250" width="384" height="150" fill="none" stroke="#6060a0" stroke-width="1.2"/>
+    <!-- Equipment / mezzanine hatching -->
+    <rect x="590" y="260" width="170" height="128" fill="#383028" opacity="0.8" stroke="rgba(140,100,60,0.6)" stroke-width="0.8"/>
+    <rect x="600" y="270" width="150" height="50" fill="#4a3820" rx="2"/>
+    <rect x="600" y="330" width="150" height="48" fill="#4a3820" rx="2"/>
+    <!-- Green area mid-right -->
+    <rect x="680" y="268" width="80" height="60" fill="#1e4020" opacity="0.8"/>
+    <rect x="680" y="268" width="80" height="60" fill="none" stroke="#3a6b3a" stroke-width="0.8"/>
+    <!-- Stair mid right -->
+    <rect x="770" y="258" width="185" height="132" fill="#383848" stroke="#6060a0" stroke-width="0.8"/>
+    <line x1="778" y1="266" x2="946" y2="266" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="276" x2="946" y2="276" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="286" x2="946" y2="286" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="296" x2="946" y2="296" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="306" x2="946" y2="306" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="316" x2="946" y2="316" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="326" x2="946" y2="326" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="336" x2="946" y2="336" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="346" x2="946" y2="346" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="356" x2="946" y2="356" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="366" x2="946" y2="366" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="376" x2="946" y2="376" stroke="#8888c0" stroke-width="0.5"/>
+
+    <!-- Lower right dock doors / bays -->
+    <rect x="578" y="404" width="384" height="226" fill="#2a3040"/>
+    <rect x="578" y="404" width="384" height="226" fill="none" stroke="#6060a0" stroke-width="1.2"/>
+    <!-- Equipment bays -->
+    <rect x="590" y="415" width="160" height="100" fill="#383028" opacity="0.8" stroke="rgba(140,100,60,0.5)" stroke-width="0.8"/>
+    <rect x="590" y="525" width="160" height="95" fill="#383028" opacity="0.8" stroke="rgba(140,100,60,0.5)" stroke-width="0.8"/>
+    <!-- Green area lower right -->
+    <rect x="680" y="500" width="80" height="55" fill="#1e4020" opacity="0.8"/>
+    <rect x="680" y="500" width="80" height="55" fill="none" stroke="#3a6b3a" stroke-width="0.8"/>
+    <!-- Stair lower right -->
+    <rect x="770" y="412" width="185" height="208" fill="#383848" stroke="#6060a0" stroke-width="0.8"/>
+    <line x1="778" y1="420" x2="946" y2="420" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="430" x2="946" y2="430" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="440" x2="946" y2="440" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="450" x2="946" y2="450" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="460" x2="946" y2="460" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="470" x2="946" y2="470" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="480" x2="946" y2="480" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="490" x2="946" y2="490" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="500" x2="946" y2="500" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="510" x2="946" y2="510" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="520" x2="946" y2="520" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="530" x2="946" y2="530" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="540" x2="946" y2="540" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="550" x2="946" y2="550" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="560" x2="946" y2="560" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="570" x2="946" y2="570" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="580" x2="946" y2="580" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="590" x2="946" y2="590" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="600" x2="946" y2="600" stroke="#8888c0" stroke-width="0.5"/>
+    <line x1="778" y1="610" x2="946" y2="610" stroke="#8888c0" stroke-width="0.5"/>
+
+    <!-- ── DOCK DOORS (bottom wall, left warehouse side) ── -->
+    <rect x="38" y="621" width="534" height="9" fill="#1e2530"/>
+    <!-- Door openings -->
+    <rect x="60"  y="619" width="44" height="11" fill="#3a4855"/>
+    <rect x="60"  y="619" width="44" height="11" fill="none" stroke="#60a0d0" stroke-width="1"/>
+    <rect x="150" y="619" width="44" height="11" fill="#3a4855"/>
+    <rect x="150" y="619" width="44" height="11" fill="none" stroke="#60a0d0" stroke-width="1"/>
+    <rect x="240" y="619" width="44" height="11" fill="#3a4855"/>
+    <rect x="240" y="619" width="44" height="11" fill="none" stroke="#60a0d0" stroke-width="1"/>
+    <rect x="330" y="619" width="44" height="11" fill="#3a4855"/>
+    <rect x="330" y="619" width="44" height="11" fill="none" stroke="#60a0d0" stroke-width="1"/>
+    <rect x="420" y="619" width="44" height="11" fill="#3a4855"/>
+    <rect x="420" y="619" width="44" height="11" fill="none" stroke="#60a0d0" stroke-width="1"/>
+
+    <!-- ── COLUMN GRID MARKERS ── -->
+    <!-- Top row markers (red circles like reference) -->
+    <circle cx="100" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="200" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="300" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="400" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="500" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="572" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="700" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="850" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="960" cy="68"  r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <!-- Bottom row markers -->
+    <circle cx="100" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="200" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="300" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="400" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="500" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="572" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="700" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="850" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <circle cx="960" cy="624" r="5" fill="none" stroke="#cc3030" stroke-width="1.5"/>
+    <!-- Left column markers -->
+    <circle cx="38"  cy="200" r="4" fill="none" stroke="#cc3030" stroke-width="1.2"/>
+    <circle cx="38"  cy="350" r="4" fill="none" stroke="#cc3030" stroke-width="1.2"/>
+    <circle cx="38"  cy="500" r="4" fill="none" stroke="#cc3030" stroke-width="1.2"/>
+    <!-- Right column markers -->
+    <circle cx="962" cy="200" r="4" fill="none" stroke="#30cc30" stroke-width="1.2"/>
+    <circle cx="962" cy="350" r="4" fill="none" stroke="#30cc30" stroke-width="1.2"/>
+    <circle cx="962" cy="500" r="4" fill="none" stroke="#30cc30" stroke-width="1.2"/>
+
+    <!-- ── GRID REFERENCE LINES (column lines, faint) ── -->
+    <line x1="100" y1="62" x2="100" y2="630" stroke="rgba(180,60,60,0.2)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="200" y1="62" x2="200" y2="630" stroke="rgba(180,60,60,0.2)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="300" y1="62" x2="300" y2="630" stroke="rgba(180,60,60,0.2)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="400" y1="62" x2="400" y2="630" stroke="rgba(180,60,60,0.2)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="500" y1="62" x2="500" y2="630" stroke="rgba(180,60,60,0.2)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="38"  y1="200" x2="962" y2="200" stroke="rgba(180,60,60,0.15)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="38"  y1="350" x2="962" y2="350" stroke="rgba(180,60,60,0.15)" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="38"  y1="500" x2="962" y2="500" stroke="rgba(180,60,60,0.15)" stroke-width="0.5" stroke-dasharray="4,6"/>
+
+    <!-- ── ZONE LABELS ── -->
+    <text x="280" y="645" text-anchor="middle" font-family="monospace" font-size="8"
+          fill="rgba(180,200,220,0.5)" letter-spacing="2">ZONE A - MAIN WAREHOUSE</text>
+    <text x="755" y="645" text-anchor="middle" font-family="monospace" font-size="8"
+          fill="rgba(180,200,220,0.4)" letter-spacing="2">ZONE B - RECEIVING / OFFICE</text>
+
+    <!-- ── NORTH ARROW ── -->
+    <g transform="translate(940,625)">
+      <circle cx="0" cy="0" r="12" fill="none" stroke="rgba(180,200,220,0.4)" stroke-width="1"/>
+      <path d="M0,-9 L3,4 L0,1 L-3,4 Z" fill="rgba(180,200,220,0.7)"/>
+      <path d="M0,1 L3,4 L0,9 L-3,4 Z" fill="rgba(180,200,220,0.25)"/>
+      <text x="0" y="-13" text-anchor="middle" font-family="monospace" font-size="6"
+            fill="rgba(180,200,220,0.6)">N</text>
+    </g>
+
+    <!-- ── TITLE BLOCK ── -->
+    <rect x="32" y="631" width="534" height="0" fill="none"/>
+    <text x="16" y="648" font-family="monospace" font-size="6" fill="rgba(180,200,220,0.35)">ACME MFG - MAIN WAREHOUSE  |  AIR MOVEMENT PLAN  |  1/16"=1'  |  DWG A-101  |  FanOS Pro 1.0</text>
+  </svg>
+
+  <!-- HVLS fans — 3 rows x 5, inside main warehouse floor -->
+  <!-- Row 1 -->
+  <div class="dev" data-id="HVLS-01" data-type="hvls" style="left:11%;top:22%"></div>
+  <div class="dev" data-id="HVLS-02" data-type="hvls" style="left:21%;top:22%"></div>
+  <div class="dev" data-id="HVLS-03" data-type="hvls" style="left:31%;top:22%"></div>
+  <div class="dev" data-id="HVLS-04" data-type="hvls" style="left:41%;top:22%"></div>
+  <div class="dev" data-id="HVLS-05" data-type="hvls" style="left:51%;top:22%"></div>
+  <!-- Row 2 -->
+  <div class="dev" data-id="HVLS-06" data-type="hvls" style="left:11%;top:46%"></div>
+  <div class="dev" data-id="HVLS-07" data-type="hvls" style="left:21%;top:46%"></div>
+  <div class="dev selected" data-id="HVLS-08" data-type="hvls" style="left:31%;top:46%"></div>
+  <div class="dev" data-id="HVLS-09" data-type="hvls" style="left:41%;top:46%"></div>
+  <div class="dev" data-id="HVLS-10" data-type="hvls" style="left:51%;top:46%"></div>
+  <!-- Row 3 -->
+  <div class="dev" data-id="HVLS-11" data-type="hvls" style="left:11%;top:70%"></div>
+  <div class="dev" data-id="HVLS-12" data-type="hvls" style="left:21%;top:70%"></div>
+  <div class="dev" data-id="HVLS-13" data-type="hvls" style="left:31%;top:70%"></div>
+  <div class="dev" data-id="HVLS-14" data-type="hvls" style="left:41%;top:70%"></div>
+  <div class="dev" data-id="HVLS-15" data-type="hvls" style="left:51%;top:70%"></div>
+  <!-- Barrel fans — on columns inside warehouse left zone -->
+  <div class="dev" data-id="Barrel-L1" data-type="barrel" style="left:7%;top:33%"></div>
+  <div class="dev" data-id="Barrel-L2" data-type="barrel" style="left:7%;top:58%"></div>
+  <div class="dev" data-id="Barrel-R1" data-type="barrel" style="left:55%;top:33%"></div>
+  <div class="dev" data-id="Barrel-R2" data-type="barrel" style="left:55%;top:58%"></div>
+  <div class="dev" data-id="Barrel-D1" data-type="barrel" style="left:20%;top:85%"></div>
+  <div class="dev" data-id="Barrel-D2" data-type="barrel" style="left:40%;top:85%"></div>
+  <!-- Wall exhaust — on left and right walls of warehouse zone -->
+  <div class="dev" data-id="WExh-L1" data-type="wallexh" style="left:5%;top:16%"></div>
+  <div class="dev" data-id="WExh-L2" data-type="wallexh" style="left:5%;top:76%"></div>
+  <div class="dev" data-id="WExh-R1" data-type="wallexh" style="left:57%;top:16%"></div>
+  <div class="dev" data-id="WExh-R2" data-type="wallexh" style="left:57%;top:76%"></div>
+  <!-- Roof exhaust — grid pattern across warehouse ceiling -->
+  <div class="dev" data-id="RExh-01" data-type="roofexh" style="left:14%;top:13%"></div>
+  <div class="dev" data-id="RExh-02" data-type="roofexh" style="left:28%;top:13%"></div>
+  <div class="dev" data-id="RExh-03" data-type="roofexh" style="left:42%;top:13%"></div>
+  <div class="dev" data-id="RExh-04" data-type="roofexh" style="left:14%;top:35%"></div>
+  <div class="dev" data-id="RExh-05" data-type="roofexh" style="left:28%;top:35%"></div>
+  <div class="dev" data-id="RExh-06" data-type="roofexh" style="left:42%;top:35%"></div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Running</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--grey)"></div>Stopped</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Fault</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>E-Stop</div>
+  </div>
+</div><!-- /floorplan -->
+
+<!-- DETAIL PANEL -->
+<div class="detail" id="detail">
+  <div class="detail-inner">
+    <div style="position:relative;">
+      <div class="det-name" id="det-name">HVLS-03</div>
+      <div class="det-zone" id="det-zone">Zone A — Warehouse</div>
+      <div class="voltage-badge" id="det-voltage">480V · 3Ph · Invertek E3</div>
+      <div class="det-close" onclick="closeDetail()">✕</div>
+    </div>
+    <div class="det-status running" id="det-sc">
+      <div class="det-sdot" id="det-sdot" style="background:var(--green)"></div>
+      <div class="det-slbl running" id="det-slbl">Running</div>
+    </div>
+    <!-- Speed section — hidden for relay devices -->
+    <div id="det-speed-section">
+      <div class="speed-big" id="det-speed">65<span class="speed-unit">%</span></div>
+      <div class="speed-hz" id="det-hz">35.8 Hz</div>
+      <div class="speed-track" id="speedTrack" onclick="clickTrack(event,this)">
+        <div class="speed-fill" id="spd-fill" style="width:65%"></div>
+      </div>
+      <div class="speed-range"><span>0</span><span>100%</span></div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="setPreset(33,this)">Low</button>
+        <button class="preset-btn active" onclick="setPreset(65,this)">Mid</button>
+        <button class="preset-btn" onclick="setPreset(100,this)">High</button>
+      </div>
+    </div>
+    <!-- Relay status — shown instead of speed for relay devices -->
+    <div id="det-relay-status" style="display:none;margin-top:12px;">
+      <div style="display:flex;align-items:center;justify-content:center;padding:18px;
+                  background:var(--surface2);border:1px solid var(--border);border-radius:10px;
+                  flex-direction:column;gap:8px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+                    color:var(--navy-dim);">Relay Control — On / Off Only</div>
+        <div id="relay-status-pill" style="font-size:22px;font-weight:800;letter-spacing:1px;
+             color:var(--green);border:2px solid var(--green);border-radius:8px;
+             padding:6px 24px;background:rgba(40,200,64,0.1);">RUNNING</div>
+        <div style="font-size:10px;color:var(--navy-dim);text-align:center;line-height:1.4;">
+          This device is relay-activated.<br>No VFD — instant on/off only.
+        </div>
+      </div>
+    </div>
+    <div class="det-sec-lbl" id="dir-lbl">Direction</div>
+    <div class="dir-row" id="dir-row">
+      <button class="dir-btn active" id="dir-fwd" onclick="setDir('fwd')">↻ Forward</button>
+      <button class="dir-btn" id="dir-rev" onclick="setDir('rev')">↺ Reverse</button>
+    </div>
+    <div class="det-sec-lbl">Live Data</div>
+    <div class="data-row" id="det-hz-row"><span class="dr-lbl">Output Hz</span><span class="dr-val" id="d-hz">35.8 Hz</span></div>
+    <div class="data-row"><span class="dr-lbl">Voltage</span><span class="dr-val" id="d-volt">480V 3Ph</span></div>
+    <div class="data-row"><span class="dr-lbl">Current</span><span class="dr-val" id="d-amps">3.4 A</span></div>
+    <div class="data-row"><span class="dr-lbl">Power</span><span class="dr-val" id="d-kw">2.3 kW</span></div>
+    <div class="data-row"><span class="dr-lbl">Temp Nearby</span><span class="dr-val" id="d-temp">76°F</span></div>
+    <div class="data-row"><span class="dr-lbl">Run Time</span><span class="dr-val" id="d-rt">6.2 hrs</span></div>
+    <div class="data-row"><span class="dr-lbl">Last Fault</span><span class="dr-val ok" id="d-fault">None</span></div>
+    <div class="det-sec-lbl">Device</div>
+    <div class="data-row"><span class="dr-lbl">Modbus Addr</span><span class="dr-val" id="d-addr">3</span></div>
+    <div class="data-row"><span class="dr-lbl">VFD Model</span><span class="dr-val" id="d-vfd">Invertek E3</span></div>
+    <div class="data-row"><span class="dr-lbl">Input Voltage</span><span class="dr-val" id="d-voltrow">480V 3Ph</span></div>
+    <div class="data-row"><span class="dr-lbl">Type</span><span class="dr-val" id="d-type">HVLS Fan</span></div>
+    <div class="det-sec-lbl">Manufacturer</div>
+    <div style="margin-bottom:6px;">
+      <input id="det-mfr-input" type="text" placeholder="e.g. Big Ass Fans, MacroAir, GFY..."
+        oninput="onMfrInput(this.value)"
+        style="width:100%;padding:7px 10px;border-radius:7px;border:1px solid var(--border);
+               background:var(--surface2);font-family:var(--sans);font-size:12px;
+               color:var(--navy);outline:none;"/>
+    </div>
+    <div id="det-mfr-wrap" style="display:none;background:rgba(0,113,227,0.06);border:1px solid rgba(0,113,227,0.2);border-radius:8px;padding:10px 12px;margin-bottom:4px;">
+      <div style="font-size:12px;font-weight:700;color:var(--navy);" id="det-mfr-name"></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.38 2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <a id="det-mfr-link" href="#" style="font-size:11px;font-weight:600;color:var(--blue);text-decoration:none;" onclick="return false;"><span id="det-mfr-phone"></span></a>
+      </div>
+      <div style="font-size:10px;color:var(--navy-dim);margin-top:4px;line-height:1.4;" id="det-mfr-note"></div>
+    </div>
+    <div class="det-actions" id="det-actions">
+      <button class="det-btn det-btn-start" onclick="detStart()">Start</button>
+      <button class="det-btn det-btn-stop"  onclick="detStop()">Stop</button>
+    </div>
+    <div id="fault-wrap" style="display:none">
+      <div style="display:flex;gap:5px;">
+        <button class="fault-btn" style="flex:1;" onclick="resetFault()">⚡ Reset Fault</button>
+        <button class="fault-btn" style="flex:1;border-color:rgba(0,113,227,0.4);background:rgba(0,113,227,0.08);color:var(--blue);"
+          onclick="openFaultGuide(DB[sel]&&DB[sel].fault,sel)">&#128270; Diagnose</button>
+      </div>
+    </div>
+    <div id="estop-wrap" style="display:none;margin-top:8px;padding:10px;background:rgba(255,59,48,0.08);border:1px solid rgba(255,59,48,0.3);border-radius:8px;">
+      <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px;">⛔ EMERGENCY FAULT — LOCKED</div>
+      <div style="font-size:10px;color:var(--navy-mid);line-height:1.4;" id="estop-msg">Visual inspection and repair required before restart.</div>
+      <div style="display:flex;gap:5px;margin-top:8px;">
+        <button onclick="openFaultGuide(DB[sel]&&DB[sel].fault,sel)" style="flex:1;padding:7px;border-radius:6px;border:1px solid rgba(0,113,227,0.4);background:rgba(0,113,227,0.08);color:var(--blue);font-size:10px;font-weight:700;cursor:pointer;">&#128270; Diagnose</button>
+        <button onclick="confirmEstopReset()" style="flex:1;padding:7px;border-radius:6px;border:1px solid rgba(255,59,48,0.4);background:transparent;color:var(--red);font-size:10px;font-weight:700;cursor:pointer;">&#10003; Inspected &amp; Repaired</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+      <button onclick="deleteFan()" style="width:100%;padding:8px;border-radius:7px;border:1px solid rgba(255,59,48,0.2);background:transparent;color:var(--navy-dim);font-family:var(--sans);font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Remove Fan from System
+      </button>
+    </div>
+  </div>
+</div>
+</div><!-- /body -->
+
+<!-- FAULT LIST MODAL -->
+<div class="modal-overlay" id="faultModal" onclick="closeFaultModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Active Faults</div>
+      <div class="modal-close" onclick="closeFaultModal()">✕</div>
+    </div>
+    <div id="faultList"></div>
+  </div>
+</div>
+
+<!-- STAGGER TOAST -->
+<div class="start-toast" id="startToast">
+  <div class="toast-icon">&#9889;</div>
+  <div class="toast-body">
+    <div class="toast-title" id="toastTitle">Starting motors…</div>
+    <div class="toast-sub" id="toastSub">Staggered start — 8s between motors</div>
+    <div class="toast-prog"><div class="toast-prog-fill" id="toastProg" style="width:0%"></div></div>
+  </div>
+  <div class="toast-cancel" onclick="cancelStagger()">Cancel</div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bnav-item active" id="bnav-dash" onclick="bnav(this,'dash')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </button>
+  <button class="bnav-item" id="bnav-zones" onclick="bnav(this,'zones')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+    Zones
+  </button>
+  <button class="bnav-item" id="bnav-edit" onclick="toggleEditMode()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    Edit Map
+  </button>
+  <button class="bnav-item" id="bnav-sched" onclick="bnav(this,'sched')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Schedule
+  </button>
+  <button class="bnav-item" id="bnav-settings" onclick="bnav(this,'settings')">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+    Settings
+  </button>
+</div>
+
+<!-- SCHEDULE PANEL -->
+<div id="panel-schedule" style="display:none;flex:1;flex-direction:column;background:var(--surface);overflow-y:auto;">
+  <div style="padding:20px;border-bottom:1px solid var(--border);">
+    <div style="font-size:18px;font-weight:700;color:var(--navy);">Schedule</div>
+    <div style="font-size:11px;color:var(--navy-dim);margin-top:3px;">Automated start/stop times</div>
+  </div>
+  <div style="padding:20px;">
+    <!-- Schedule items -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;background:rgba(40,200,64,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">🌅</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);">Morning Start</div>
+        <div style="font-size:11px;color:var(--navy-dim);margin-top:2px;">Mon-Fri &nbsp;6:00 AM &mdash; All Fans 65%</div>
+      </div>
+      <div style="width:36px;height:20px;background:var(--green);border-radius:10px;position:relative;cursor:pointer;">
+        <div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;background:rgba(230,172,0,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">🌞</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);">Peak Hours</div>
+        <div style="font-size:11px;color:var(--navy-dim);margin-top:2px;">Mon-Fri &nbsp;12:00 PM &mdash; All Fans 100%</div>
+      </div>
+      <div style="width:36px;height:20px;background:var(--green);border-radius:10px;position:relative;cursor:pointer;">
+        <div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+      <div style="width:38px;height:38px;background:rgba(0,113,227,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">&#127769;</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);">Evening Stop</div>
+        <div style="font-size:11px;color:var(--navy-dim);margin-top:2px;">Mon-Fri &nbsp;6:00 PM &mdash; All Fans OFF</div>
+      </div>
+      <div style="width:36px;height:20px;background:var(--green);border-radius:10px;position:relative;cursor:pointer;">
+        <div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+      </div>
+    </div>
+    <button onclick="showPanel('dash');document.querySelectorAll('.bnav-item')[0].classList.add('active');" style="width:100%;padding:12px;border-radius:8px;border:none;background:var(--blue);color:white;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">+ Add Schedule</button>
+  </div>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="panel-settings" style="display:none;flex:1;flex-direction:column;background:var(--surface);overflow-y:auto;">
+  <div style="padding:20px;border-bottom:1px solid var(--border);">
+    <div style="font-size:18px;font-weight:700;color:var(--navy);">Settings</div>
+    <div style="font-size:11px;color:var(--navy-dim);margin-top:3px;">System configuration</div>
+  </div>
+  <div style="padding:16px;">
+    <!-- Site Info -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:4px 0 10px;">Site Info</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+        <span style="font-size:13px;color:var(--navy-mid);">Site Name</span>
+        <span style="font-size:13px;font-weight:500;color:var(--navy);">Acme Manufacturing</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+        <span style="font-size:13px;color:var(--navy-mid);">Location</span>
+        <span style="font-size:13px;font-weight:500;color:var(--navy);">Main Warehouse</span>
+      </div>
+    </div>
+    <!-- RS-485 -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:4px 0 10px;">RS-485 Ports</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+        <span style="font-size:13px;color:var(--navy-mid);">Port 1 Baud</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--navy);">9600 8N1</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+        <span style="font-size:13px;color:var(--navy-mid);">Port 2 Baud</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--navy);">19200 8E1</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+        <span style="font-size:13px;color:var(--navy-mid);">Devices Found</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--green);">31 online</span>
+      </div>
+    </div>
+    <!-- Display -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:4px 0 10px;">Display</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+        <span style="font-size:13px;color:var(--navy-mid);">Dark Mode</span>
+        <div onclick="toggleDark()" style="width:36px;height:20px;background:var(--blue);border-radius:10px;position:relative;cursor:pointer;">
+          <div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+        <span style="font-size:13px;color:var(--navy-mid);">Poll Interval</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--navy);">2 seconds</span>
+      </div>
+    </div>
+    <!-- System -->
+    <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);margin:4px 0 10px;">System</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+        <span style="font-size:13px;color:var(--navy-mid);">Version</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--navy);">FanOS Pro 1.0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+        <span style="font-size:13px;color:var(--navy-mid);">Uptime</span>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--green);">14d 6h 22m</span>
+      </div>
+    </div>
+    <button style="width:100%;padding:11px;border-radius:8px;border:1px solid rgba(255,59,48,0.3);background:rgba(255,59,48,0.08);color:var(--red);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Restart Service</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="closeSettingsModal(event)">
+  <div class="modal-sheet" style="max-height:88vh;border-radius:16px 16px 0 0;">
+    <div class="modal-header">
+      <div class="modal-title">Settings</div>
+      <div class="modal-close" onclick="closeSettingsModal()">✕</div>
+    </div>
+    <div style="overflow-y:auto;padding-bottom:20px;">
+
+      <!-- SITE -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">Site</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Site Name</span>
+          <span style="font-size:13px;font-weight:500;color:var(--navy);">Acme Manufacturing</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <span style="font-size:13px;color:var(--navy-mid);">Location</span>
+          <span style="font-size:13px;font-weight:500;color:var(--navy);">Main Warehouse</span>
+        </div>
+      </div>
+
+      <!-- COMMUNICATION -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">Communication</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <div><div style="font-size:13px;color:var(--navy-mid);">RS-485 Port 1</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Invertek / Yaskawa</div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--green);">9600 8N1 ● Online</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <div><div style="font-size:13px;color:var(--navy-mid);">RS-485 Port 2</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Schneider ATV320</div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--green);">19200 8E1 ● Online</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <span style="font-size:13px;color:var(--navy-mid);">Poll Interval</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">2 seconds</span>
+        </div>
+      </div>
+
+      <!-- FAN CONTROL -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">Fan Control</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <div><div style="font-size:13px;color:var(--navy-mid);">Stagger Delay</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Delay between motor starts</div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">8 seconds</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <div><div style="font-size:13px;color:var(--navy-mid);">Max Fan Speed</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Maximum Hz output</div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">55 Hz</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <div><div style="font-size:13px;color:var(--navy-mid);">FA Interlock</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Fire alarm input — GPIO 27</div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--green);">● Monitoring</span>
+        </div>
+      </div>
+
+      <!-- TEMPERATURE -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">Temperature Control</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <div><div style="font-size:13px;color:var(--navy-mid);">Auto Speed by Temp</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">DHT22 sensor on Port 1</div></div>
+          <div style="width:36px;height:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;position:relative;cursor:pointer;">
+            <div style="width:16px;height:16px;background:var(--navy-dim);border-radius:50%;position:absolute;top:1px;left:1px;"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Low Speed Trigger</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">Below 70°F</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <span style="font-size:13px;color:var(--navy-mid);">High Speed Trigger</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">Above 85°F</span>
+        </div>
+      </div>
+
+      <!-- NETWORK -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">Network</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Local IP</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--blue);">192.168.1.105</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">WiFi Network</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">ACME-FLOOR</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <div><div style="font-size:13px;color:var(--navy-mid);">Remote Access</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Cloudflare Tunnel — SaaS</div></div>
+          <div style="width:36px;height:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;position:relative;cursor:pointer;">
+            <div style="width:16px;height:16px;background:var(--navy-dim);border-radius:50%;position:absolute;top:1px;left:1px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISPLAY -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">Display</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Dark Mode</span>
+          <div onclick="toggleDark()" style="width:36px;height:20px;background:var(--blue);border-radius:10px;position:relative;cursor:pointer;">
+            <div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <div><div style="font-size:13px;color:var(--navy-mid);">Kiosk Mode</div><div style="font-size:10px;color:var(--navy-dim);margin-top:1px;">Auto-launch on boot</div></div>
+          <div style="width:36px;height:20px;background:var(--blue);border-radius:10px;position:relative;cursor:pointer;">
+            <div style="width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYSTEM -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--navy-dim);">System</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Version</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">FanOS Pro 1.0.0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Hardware</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">AAEON UP Xtreme 7100</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border2);">
+          <span style="font-size:13px;color:var(--navy-mid);">Uptime</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--green);">14d 6h 22m</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+          <span style="font-size:13px;color:var(--navy-mid);">Total Fans</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--navy);">31 configured</span>
+        </div>
+      </div>
+      <div style="padding:0 14px;display:flex;flex-direction:column;gap:8px;">
+        <button style="width:100%;padding:11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--navy-mid);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Restart Service</button>
+        <button style="width:100%;padding:11px;border-radius:8px;border:1px solid rgba(255,59,48,0.3);background:rgba(255,59,48,0.06);color:var(--red);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Clear Fan Configuration</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- FAULT GUIDE MODAL -->
+<div class="modal-overlay" id="faultGuideModal" onclick="closeFaultGuide(event)">
+  <div class="modal-sheet" style="max-height:88vh;">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--yellow);margin-bottom:2px;">Fault Diagnostic Guide</div>
+        <div class="modal-title" id="fg-title">Motor Overload</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--navy-dim);margin-top:2px;" id="fg-code">E07</div>
+      </div>
+      <div class="modal-close" onclick="closeFaultGuide()">✕</div>
+    </div>
+    <div style="overflow-y:auto;">
+
+      <!-- Manufacturer support -->
+      <div id="fg-mfr-support" style="display:none;margin:12px 14px 0;background:rgba(0,113,227,0.06);border:1px solid rgba(0,113,227,0.2);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);margin-bottom:4px;">Manufacturer Support</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;font-weight:600;color:var(--navy);" id="fg-mfr-display"></span>
+          <a id="fg-mfr-tel-link" href="#" style="font-size:12px;font-weight:700;color:var(--blue);text-decoration:none;" onclick="return false;" id="fg-mfr-tel"></a>
+        </div>
+      </div>
+
+      <!-- Possible causes -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--yellow);">Possible Causes</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 14px;" id="fg-causes"></div>
+
+      <!-- How to check -->
+      <div style="padding:14px 20px 6px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue);">How to Check &amp; Fix</div>
+      <div style="margin:0 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 14px;" id="fg-checks"></div>
+
+      <!-- Safety notice -->
+      <div style="margin:12px 14px 20px;background:rgba(255,59,48,0.06);border:1px solid rgba(255,59,48,0.2);border-radius:8px;padding:10px 14px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);margin-bottom:4px;">Safety Notice</div>
+        <div style="font-size:11px;color:var(--navy-mid);line-height:1.5;">Always de-energize the fan and VFD before performing any physical inspection. Lock out / tag out per your facility safety procedures. Do not reset emergency faults remotely — inspect the fan physically first.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="deleteModal" onclick="closeDeleteModal(event)">
+  <div class="modal-sheet" style="max-height:40vh;">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--red);">Remove Fan</div>
+      <div class="modal-close" onclick="closeDeleteModal()">✕</div>
+    </div>
+    <div style="padding:20px;">
+      <div style="font-size:14px;color:var(--navy);margin-bottom:6px;" id="delete-fan-name">Remove HVLS-03?</div>
+      <div style="font-size:12px;color:var(--navy-dim);margin-bottom:20px;">This fan will be removed from the floor plan and all zones. The VFD will remain wired but uncontrolled.</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeDeleteModal()" style="flex:1;padding:11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--navy-mid);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="confirmDelete()" style="flex:1;padding:11px;border-radius:8px;border:none;background:var(--red);color:white;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Remove Fan</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /app -->
+
+<script>
+// -- MANUFACTURER DATABASE -------------------------------------
+var MFR_DB = {
+  'big ass fans':    {display:'Big Ass Fans',    phone:'1-877-244-3267', url:'bigassfans.com',    note:'BAF Connect app or call for VFD fault codes'},
+  'baf':             {display:'Big Ass Fans',    phone:'1-877-244-3267', url:'bigassfans.com',    note:'BAF Connect app or call for VFD fault codes'},
+  'macroair':        {display:'MacroAir HVLS',   phone:'1-888-466-2726', url:'macroairfans.com',  note:'Schneider ATV320 or Yaskawa V1000 VFD -- check parameter list'},
+  'macro air':       {display:'MacroAir HVLS',   phone:'1-888-466-2726', url:'macroairfans.com',  note:'Schneider ATV320 or Yaskawa V1000 VFD -- check parameter list'},
+  'hunter':          {display:'Hunter Industrial',phone:'1-800-786-8935', url:'hunterfan.com',     note:'eC motor -- contact Hunter Industrial division'},
+  'hunter industrial':{display:'Hunter Industrial',phone:'1-800-786-8935',url:'hunterfan.com',    note:'eC motor -- contact Hunter Industrial division'},
+  'hvls direct':     {display:'HVLS Direct',     phone:'1-855-484-5748', url:'hvlsdirect.com',    note:'Verify VFD brand on unit -- Invertek or Yaskawa typical'},
+  'go fan yourself': {display:'Go Fan Yourself', phone:'1-888-432-6268', url:'gofanyourself.com', note:'Invertek Optidrive E3 VFD -- use Navigator parameters'},
+  'gfy':             {display:'Go Fan Yourself', phone:'1-888-432-6268', url:'gofanyourself.com', note:'Invertek Optidrive E3 VFD -- use Navigator parameters'},
+  'vivid air':       {display:'Vivid Air / GFY', phone:'1-888-432-6268', url:'gofanyourself.com', note:'Invertek Optidrive E3 VFD -- use Navigator parameters'},
+  'rite-hite':       {display:'Rite-Hite',       phone:'1-800-456-0600', url:'ritehite.com',      note:'Fan-Commander system -- Rite-Hite tech support for Modbus map'},
+  'rite hite':       {display:'Rite-Hite',       phone:'1-800-456-0600', url:'ritehite.com',      note:'Fan-Commander system -- Rite-Hite tech support for Modbus map'},
+  'delta t':         {display:'Delta T',         phone:'1-877-688-0096', url:'deltatfans.com',    note:'Verify VFD type -- Yaskawa or ABB common'},
+  'deltat':          {display:'Delta T',         phone:'1-877-688-0096', url:'deltatfans.com',    note:'Verify VFD type -- Yaskawa or ABB common'},
+  'auramist':        {display:'AuraMist',        phone:'1-888-287-2648', url:'auramist.com',      note:'Contact AuraMist for VFD configuration'},
+  'century':         {display:'Century Fan',     phone:'1-800-253-6076', url:'centuryind.com',    note:'Contact Century for motor specs and fault codes'},
+  'ztech':           {display:'Ztech Fans',      phone:'1-855-498-3246', url:'ztechfans.com',     note:'Invertek VFD typical -- verify on unit nameplate'},
+  'z-tech':          {display:'Ztech Fans',      phone:'1-855-498-3246', url:'ztechfans.com',     note:'Invertek VFD typical -- verify on unit nameplate'},
+  'envira north':    {display:'Envira-North',    phone:'1-888-663-8476', url:'enviranorth.com',   note:'Yaskawa VFD typical -- verify on unit nameplate'},
+  'enviranorth':     {display:'Envira-North',    phone:'1-888-463-8476', url:'enviranorth.com',   note:'Yaskawa VFD typical -- verify on unit nameplate'},
+  'patterson':       {display:'Patterson Fan',   phone:'1-800-333-7273', url:'pattersonfan.com',  note:'EC motor or VFD depending on model -- check nameplate'},
+  'penn':            {display:'Penn Fan',        phone:'1-800-523-5747', url:'pennfan.com',       note:'Contact Penn for motor and VFD specs'},
+};
+
+function lookupMfr(name){
+  if(!name) return null;
+  var key = name.toLowerCase().trim();
+  if(MFR_DB[key]) return MFR_DB[key];
+  // Partial match
+  var keys = Object.keys(MFR_DB);
+  for(var i=0;i<keys.length;i++){
+    if(key.indexOf(keys[i])>-1 || keys[i].indexOf(key)>-1) return MFR_DB[keys[i]];
+  }
+  return null;
+}
+
+// -- FAULT DIAGNOSTIC DATABASE ---------------------------------
+var FAULT_GUIDE = {
+  // Invertek E3 fault codes
+  'E01': {title:'DC Bus Overvoltage',         causes:['Supply voltage too high','Rapid deceleration -- regeneration','Long cable run causing reflections'],            checks:['Measure input voltage at VFD -- should be within +/-10% of nameplate','Check deceleration ramp time -- increase if needed','Check for capacitive coupling on long cable runs']},
+  'E02': {title:'DC Bus Undervoltage',        causes:['Supply voltage too low or lost','Loose input wiring or fuse blown','Momentary power dip during start'],           checks:['Measure input voltage at VFD terminals L1/L2/L3','Check input fuses and breaker -- replace if blown','Check all input terminal connections for tightness']},
+  'E03': {title:'Output Overcurrent',         causes:['Motor or wiring short circuit','Acceleration ramp too fast','VFD undersized for motor load','Bearing failure causing locked rotor'], checks:['Disconnect motor leads and run VFD -- if fault clears, issue is in motor or wiring','Check motor winding resistance -- should be equal on all phases','Increase acceleration time in VFD parameters','Verify VFD HP rating matches or exceeds motor nameplate']},
+  'E04': {title:'Motor Overtemperature',      causes:['Ambient temp too high','Fan not running -- fan blade or motor failure','Running at very low speed for extended time'], checks:['Check VFD enclosure ventilation and ambient temp','Verify internal cooling fan on VFD is spinning','Check fan blade for obstruction or damage','Allow VFD to cool 15-20 min before reset']},
+  'E05': {title:'Drive Overtemperature',      causes:['Heatsink too hot','Insufficient airflow over VFD','High duty cycle in high ambient'],                          checks:['Check VFD enclosure ventilation and ambient temp','Clean heatsink fins -- compressed air','Verify cooling fan on VFD is operating','Check if enclosure is sealed against airflow']},
+  'E06': {title:'Output Phase Loss',          causes:['Motor lead disconnected','Contactor or relay not closing fully','VFD output IGBT failure'],                     checks:['Check all three motor leads U/V/W at VFD output terminals','Check for loose or corroded terminals','Measure resistance T1/T2/T3 to motor -- should be balanced','Contact service if IGBT failure suspected']},
+  'E07': {title:'Motor Overload',             causes:['Motor running at too high a load','Mechanical binding -- bearings or gearbox','Motor undersized for application'], checks:['Verify fan blade is not mechanically obstructed','Check motor and gearbox for free rotation by hand','Verify load on fan -- confirm blade pitch if adjustable','Check current draw -- compare to motor FLA nameplate']},
+  'E08': {title:'Input Phase Loss',           causes:['One input phase missing','Loose input wiring','Upstream fuse or breaker blown on one phase'],                   checks:['Measure voltage L1/L2/L3 at VFD input -- all three should be present','Check input fuses -- replace any open fuses','Check breaker and disconnect -- reset if tripped','Check all input terminal connections']},
+  'E10': {title:'Modbus Communication Fault', causes:['RS-485 cable disconnected or damaged','Wrong Modbus address or baud rate','FanOS Pro server not responding','Termination resistor missing on last drive'],checks:['Check RS-485 cable connections at VFD and FanOS Pro box','Verify Modbus address matches FanOS Pro configuration','Verify baud rate -- Invertek E3 default is 9600','Ensure 120-ohm termination resistor is on last drive in chain']},
+  // Generic fault types
+  'E-STOP':        {title:'Emergency Stop -- Safety Lockout', causes:['Thermal overload trip','Overcurrent protection triggered','External E-Stop input activated','FA interlock signal received'],             checks:['Do NOT reset remotely -- inspect fan physically first','Check motor and gearbox for unusual heat or noise','Verify all safety guards are in place','Check FA interlock wiring -- confirm no alarm condition exists','Check VFD fault log for root cause code']},
+  'OVERCURRENT':   {title:'Overcurrent Trip',               causes:['Mechanical load too high','Motor fault -- winding failure','VFD output short'],                                                         checks:['Inspect fan blade and motor for mechanical binding','Check motor winding insulation -- use megohmmeter','Verify motor lead wiring at VFD output']},
+  'OVERLOAD':      {title:'Motor Overload Trip',            causes:['Sustained overload condition','High ambient temperature','Incorrect overload setting in VFD'],                                         checks:['Check motor current draw with clamp meter','Verify overload setting in VFD matches motor FLA','Check for mechanical resistance in drive train']},
+  'COMM':          {title:'Communication Loss',             causes:['Cable fault or disconnection','Address conflict -- duplicate Modbus address','Power cycle cleared address setting'],                      checks:['Check RS-485 cable continuity A+ to A+, B- to B-','Verify unique Modbus address in VFD parameters','Check for address conflicts -- no two drives same address']},
+};
+
+function lookupFault(faultCode){
+  if(!faultCode||faultCode==='None') return null;
+  var code = faultCode.toUpperCase().trim();
+  // Direct match
+  if(FAULT_GUIDE[code]) return FAULT_GUIDE[code];
+  // Match partial e.g. "E07 Overload" -> E07
+  var keys=Object.keys(FAULT_GUIDE);
+  for(var i=0;i<keys.length;i++){
+    if(code.indexOf(keys[i])>-1) return FAULT_GUIDE[keys[i]];
+  }
+  // Keyword match
+  if(code.indexOf('OVERLOAD')>-1||code.indexOf('OL')>-1) return FAULT_GUIDE['OVERLOAD'];
+  if(code.indexOf('OVERCURRENT')>-1||code.indexOf('OC')>-1) return FAULT_GUIDE['OVERCURRENT'];
+  if(code.indexOf('COMM')>-1||code.indexOf('MODBUS')>-1) return FAULT_GUIDE['COMM'];
+  if(code.indexOf('ESTOP')>-1||code.indexOf('E-STOP')>-1||code.indexOf('EMERGENCY')>-1) return FAULT_GUIDE['E-STOP'];
+  return null;
+}
+
+// ---------------------------------------------------
+// FANOS PRO - DASHBOARD SCRIPT
+// Clean rewrite. Helpers defined first. No stale refs.
+// ---------------------------------------------------
+
+// -- HELPER FUNCTIONS - defined first, used everywhere ----------
+function g(id)          { return document.getElementById(id); }
+function setText(id,v)  { var e=g(id); if(e) e.textContent=String(v); }
+function setHTML(id,v)  { var e=g(id); if(e) e.innerHTML=v; }
+function setStyle(id,p,v){ var e=g(id); if(e) e.style[p]=v; }
+function setClass(id,v) { var e=g(id); if(e) e.className=v; }
+
+// -- DEVICE DATABASE --------------------------------------------
+var DB = {
+  'HVLS-01' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:75,rt:6.1,addr:1, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:'Go Fan Yourself'},
+  'HVLS-02' :{type:'hvls',s:72,tgt:72,st:'running',fault:'None',t:76,rt:6.5,addr:2, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-03' :{type:'hvls',s:0,  tgt:0, st:'estop',  fault:'E-STOP: Thermal Overload -- Visual inspection required',t:76,rt:6.2,addr:3, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-04' :{type:'hvls',s:58,tgt:58,st:'running',fault:'None',t:75,rt:5.8,addr:4, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-05' :{type:'hvls',s:80,tgt:80,st:'running',fault:'None',t:78,rt:6.2,addr:5, vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-06' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:6, vfd:'Schneider ATV320',zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:'MacroAir'},
+  'HVLS-07' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:77,rt:6.2,addr:7, vfd:'Schneider ATV320',zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-08' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:8, vfd:'Yaskawa V1000',  zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:'MacroAir'},
+  'HVLS-09' :{type:'hvls',s:0, tgt:65,st:'stopped',fault:'None',t:75,rt:0,  addr:9, vfd:'Yaskawa V1000',  zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-10' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:10,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-11' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:11,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-12' :{type:'hvls',s:0, tgt:65,st:'fault',  fault:'E07 Overload',t:77,rt:3.2,addr:12,vfd:'Invertek E3',zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-13' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:13,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-14' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:14,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'HVLS-15' :{type:'hvls',s:65,tgt:65,st:'running',fault:'None',t:76,rt:6.2,addr:15,vfd:'Invertek E3',    zone:'Zone A',volt:'480V',phase:'3Ph',maxA:3.4,maxKW:2.0,dir:'fwd',mfr:''},
+  'Barrel-L1':{type:'barrel',s:70,tgt:70,st:'running',fault:'None',t:76,rt:5.8,addr:16,vfd:'Relay',zone:'Zone A',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5,mfr:''},
+  'Barrel-L2':{type:'barrel',s:70,tgt:70,st:'running',fault:'None',t:77,rt:5.8,addr:17,vfd:'Relay',zone:'Zone A',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5,mfr:''},
+  'Barrel-R1':{type:'barrel',s:60,tgt:60,st:'running',fault:'None',t:76,rt:5.5,addr:18,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:3.2,maxKW:0.7,mfr:''},
+  'Barrel-R2':{type:'barrel',s:0, tgt:60,st:'stopped',fault:'None',t:75,rt:0,  addr:19,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:3.2,maxKW:0.7,mfr:''},
+  'Barrel-D1':{type:'barrel',s:65,tgt:65,st:'running',fault:'None',t:72,rt:5.0,addr:20,vfd:'Relay',zone:'Zone B',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5,mfr:''},
+  'Barrel-D2':{type:'barrel',s:65,tgt:65,st:'running',fault:'None',t:72,rt:5.0,addr:21,vfd:'Relay',zone:'Zone B',volt:'120V',phase:'1Ph',maxA:4.5,maxKW:0.5,mfr:''},
+  'WExh-L1'  :{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:22,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8,mfr:''},
+  'WExh-L2'  :{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:23,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8,mfr:''},
+  'WExh-R1'  :{type:'wallexh',s:100,tgt:100,st:'running',fault:'None',t:78,rt:7.5,addr:24,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8,mfr:''},
+  'WExh-R2'  :{type:'wallexh',s:0,  tgt:100,st:'fault',  fault:'E03 Overcurrent',t:79,rt:2.1,addr:25,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'1Ph',maxA:4.0,maxKW:0.8,mfr:''},
+  'RExh-01'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:82,rt:8.0,addr:26,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2,mfr:''},
+  'RExh-02'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:27,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2,mfr:''},
+  'RExh-03'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:28,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2,mfr:''},
+  'RExh-04'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:82,rt:8.0,addr:29,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2,mfr:''},
+  'RExh-05'  :{type:'roofexh',s:100,tgt:100,st:'running',fault:'None',t:81,rt:8.0,addr:30,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2,mfr:''},
+  'RExh-06'  :{type:'roofexh',s:0,  tgt:100,st:'stopped',fault:'None',t:80,rt:0,  addr:31,vfd:'Relay',zone:'Zone A',volt:'240V',phase:'3Ph',maxA:3.5,maxKW:1.2}
+};
+
+var typeLabel = {hvls:'HVLS Fan',barrel:'Barrel / Basket Fan',wallexh:'Wall Exhaust Fan',roofexh:'Roof Exhaust Fan'};
+var ST_COL = {running:'#28c840',stopped:'#b0bec5',fault:'#e6ac00',estop:'#ff3b30',ramping:'#0071e3',reversing:'#0071e3'};
+function col(st){ return ST_COL[st]||'#b0bec5'; }
+function hubCol(c){ return {'#28c840':'#1a8a35','#e6ac00':'#9a7000','#ff3b30':'#c0281e','#0071e3':'#004fb3','#b0bec5':'#8a9ab0'}[c]||'#8a9ab0'; }
+
+// -- POWER SCALING ----------------------------------------------
+function liveAmps(d){ if(!d||d.s<=0)return 0; return +(d.maxA*Math.pow(d.s/100,1.5)).toFixed(1); }
+function liveKW(d)  { if(!d||d.s<=0)return 0; return +(d.maxKW*Math.pow(d.s/100,2.5)).toFixed(2); }
+function liveHz(d)  { if(!d)return 0; return +(d.s/100*55).toFixed(1); }
+
+function calcTotalPower(){
+  var kw=0;
+  Object.keys(DB).forEach(function(k){ var d=DB[k]; if(d&&d.s>0) kw+=liveKW(d); });
+  setText('totalPower', kw.toFixed(1)+' kW');
+}
+
+// -- RAF ROTATION -----------------------------------------------
+// rotors[id].el = the .dev-icon-wrap div. CSS transform rotates it.
+// No IDs inside SVGs. No stale references.
+var rotors = {};
+var lastTime = null;
+var MAX_DEG = 1080;
+
+function rafLoop(ts){
+  if(!lastTime) lastTime=ts;
+  var dt = Math.min((ts-lastTime)/1000, 0.05);
+  lastTime = ts;
+  var ids = Object.keys(rotors);
+  for(var i=0;i<ids.length;i++){
+    var id=ids[i], r=rotors[id], d=DB[id];
+    if(!r||!d||!r.el||!r.el.style) continue;
+    var spd = d.s/100;
+    var deg = spd * MAX_DEG * (d.dir==='rev'?-1:1);
+    r.angle = (r.angle + deg*dt) % 360;
+    r.el.style.transform = 'rotate('+r.angle.toFixed(1)+'deg)';
+  }
+  requestAnimationFrame(rafLoop);
+}
+requestAnimationFrame(rafLoop);
+
+// -- SVG BUILDERS - NO IDs inside SVG, no stale refs -----------
+function makeSVG(id){
+  var d=DB[id]; if(!d) return '';
+  var c=col(d.st), hc=hubCol(c);
+  var bl, sp;
+  if(d.type==='hvls'){
+    bl=[0,72,144,216,288].map(function(a){
+      return '<g transform="rotate('+a+',20,20)"><rect x="18.5" y="3" width="3" height="14" rx="1.2" fill="'+c+'"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 40 40" width="44" height="44">'+bl+
+           '<circle cx="20" cy="20" r="4" fill="'+hc+'"/>'+
+           '<circle cx="20" cy="20" r="1.8" fill="rgba(255,255,255,0.5)"/></svg>';
+  }
+  if(d.type==='barrel'){
+    sp=[0,60,120,180,240,300].map(function(a){
+      return '<line x1="16" y1="16" x2="'+(16+13*Math.cos(a*Math.PI/180)).toFixed(1)+'" y2="'+(16+13*Math.sin(a*Math.PI/180)).toFixed(1)+'" stroke="'+c+'" stroke-width="0.7" opacity="0.3"/>';
+    }).join('');
+    bl=[0,90,180,270].map(function(a){
+      return '<g transform="rotate('+a+',16,16)"><path d="M16 16 L14.5 5 Q16 3.5 17.5 5 Z" fill="'+c+'"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 32 32" width="32" height="32">'+
+           '<circle cx="16" cy="16" r="14.5" fill="none" stroke="'+c+'" stroke-width="2.5" opacity="0.55"/>'+
+           '<circle cx="16" cy="16" r="10" fill="none" stroke="'+c+'" stroke-width="0.8" opacity="0.18"/>'+
+           sp+bl+
+           '<circle cx="16" cy="16" r="3.5" fill="'+hc+'"/>'+
+           '<circle cx="16" cy="16" r="1.6" fill="rgba(255,255,255,0.55)"/></svg>';
+  }
+  if(d.type==='wallexh'){
+    bl=[0,90,180,270].map(function(a){
+      return '<g transform="rotate('+a+',15,15)"><path d="M15 15 L13.8 6 Q15 4.8 16.2 6 Z" fill="'+c+'"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 30 30" width="28" height="28">'+
+           '<rect x="1" y="1" width="28" height="28" rx="3" fill="none" stroke="'+c+'" stroke-width="2" opacity="0.5"/>'+
+           '<line x1="1" y1="8" x2="29" y2="8" stroke="'+c+'" stroke-width="0.7" opacity="0.22"/>'+
+           '<line x1="1" y1="15" x2="29" y2="15" stroke="'+c+'" stroke-width="0.7" opacity="0.22"/>'+
+           '<line x1="1" y1="22" x2="29" y2="22" stroke="'+c+'" stroke-width="0.7" opacity="0.22"/>'+
+           bl+
+           '<circle cx="15" cy="15" r="3" fill="'+hc+'"/>'+
+           '<circle cx="15" cy="15" r="1.4" fill="rgba(255,255,255,0.5)"/></svg>';
+  }
+  if(d.type==='roofexh'){
+    bl=[0,60,120,180,240,300].map(function(a){
+      return '<g transform="rotate('+a+',16,16)"><path d="M16 16 Q20 11 18 7" stroke="'+c+'" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>';
+    }).join('');
+    return '<svg viewBox="0 0 32 32" width="30" height="30">'+
+           '<rect x="1" y="1" width="30" height="30" rx="4" fill="none" stroke="'+c+'" stroke-width="1.8" opacity="0.38"/>'+
+           '<circle cx="16" cy="16" r="13" fill="none" stroke="'+c+'" stroke-width="1.2" opacity="0.32"/>'+
+           bl+
+           '<circle cx="16" cy="16" r="3.8" fill="'+hc+'"/>'+
+           '<circle cx="16" cy="16" r="1.8" fill="rgba(255,255,255,0.5)"/></svg>';
+  }
+  return '';
+}
+
+function makeLblSt(d){
+  if(!d) return '';
+  if(d.s>0&&(d.st==='running'||d.st==='ramping'||d.st==='reversing')){
+    var prefix=(d.dir==='rev')?'-':'';
+    return prefix+liveHz(d).toFixed(1)+' Hz';
+  }
+  return {running:'Running',stopped:'Stopped',fault:'Fault',estop:'E-Stop',ramping:'Ramping...',reversing:'Reversing...'}[d.st]||d.st;
+}
+
+// Build all fan nodes. Called once on load.
+function buildAllNodes(){
+  var nodes = document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++){
+    (function(el){
+      var id = el.dataset.id;
+      var d  = DB[id];
+      if(!d) return;
+      var c = col(d.st);
+      // Build inner HTML - wrap div gets CSS rotated by RAF
+      el.innerHTML =
+        '<div class="dev-icon-wrap">'+makeSVG(id)+'</div>'+
+        '<div class="dev-lbl-id">'+id+'</div>'+
+        '<div class="dev-lbl-st" style="color:'+c+'" id="lst_'+id.replace(/\W/g,'_')+'">'+makeLblSt(d)+'</div>';
+      // Store reference to the wrapper div for RAF
+      var wrap = el.querySelector('.dev-icon-wrap');
+      var svgEl = wrap ? wrap.querySelector('svg') : null;
+      rotors[id] = {el: svgEl||wrap, angle: Math.random()*360};
+      // Single click/tap handler
+      el.addEventListener('click', function(){ if(!editMode) selectDev(id); });
+    })(nodes[i]);
+  }
+  setupDrag();
+}
+
+// Update a device's icon and label after state change.
+// Rebuilds SVG inside the wrapper (no IDs in SVG = no duplicates).
+// Re-points RAF rotor to the (same) wrapper div.
+function updateColor(id){
+  var d = DB[id]; if(!d) return;
+  var c = col(d.st);
+  var rid = id.replace(/\W/g,'_');
+  // Update the icon
+  var devNode = document.querySelector('.dev[data-id="'+id+'"]');
+  if(devNode){
+    var wrap = devNode.querySelector('.dev-icon-wrap');
+    if(wrap){
+      wrap.innerHTML = makeSVG(id);
+      var newSvg = wrap.querySelector('svg');
+      if(rotors[id]) rotors[id].el = newSvg || wrap;
+    }
+    devNode.classList.toggle('estop', d.st==='estop');
+  }
+  // Update status label
+  var lbl = g('lst_'+rid);
+  if(lbl){ lbl.style.color=c; lbl.textContent=makeLblSt(d); }
+}
+
+// -- RAMP ENGINE ------------------------------------------------
+var STEP = 1.8;  // % per 200ms -> ~12s full range
+var SLOW_STEP = 1.1; // % per 200ms -> ~18s for all-off
+var rampTimers = {};
+
+function startRamp(id, step){
+  step = step || STEP;
+  if(rampTimers[id]) clearInterval(rampTimers[id]);
+  var d = DB[id];
+  rampTimers[id] = setInterval(function(){
+    var diff = d.tgt - d.s;
+    if(Math.abs(diff) < step){
+      d.s = d.tgt;
+      d.st = (d.s===0) ? 'stopped' : 'running';
+      clearInterval(rampTimers[id]); delete rampTimers[id];
+    } else {
+      d.s += (diff>0) ? step : -step;
+      d.s = Math.max(0, Math.min(100, d.s));
+      d.st = (d.s>0) ? 'ramping' : 'stopped';
+    }
+    updateColor(id);
+    if(sel===id) refreshDetailLive();
+    updateCounts();
+    calcTotalPower();
+  }, 200);
+}
+
+
+function rampTo(id, tgt){
+  var d=DB[id]; if(!d) return;
+  d.tgt = tgt;
+  if(tgt>0 && d.st==='stopped') d.st='ramping';
+  startRamp(id, STEP);
+}
+
+function rampToSlow(id, tgt){
+  var d=DB[id]; if(!d) return;
+  d.tgt = tgt;
+  if(tgt>0 && d.st==='stopped') d.st='ramping';
+  startRamp(id, SLOW_STEP);
+}
+
+// Reverse: ramp to 0, flip dir, ramp back up
+function startReverse(id){
+  var d=DB[id]; if(!d||d.type!=='hvls') return;
+  var prevTgt = d.tgt||65;
+  if(rampTimers[id]) clearInterval(rampTimers[id]);
+  d.st='reversing'; d.tgt=0;
+  var phase=1;
+  rampTimers[id]=setInterval(function(){
+    if(phase===1){
+      d.s = Math.max(0, d.s-STEP);
+      d.st = 'reversing';
+      if(d.s<=0){ d.dir=(d.dir==='fwd'?'rev':'fwd'); d.tgt=prevTgt; phase=2; }
+    } else {
+      var diff=d.tgt-d.s;
+      if(Math.abs(diff)<STEP){
+        d.s=d.tgt; d.st='running';
+        clearInterval(rampTimers[id]); delete rampTimers[id];
+      } else {
+        d.s=Math.min(100,d.s+STEP); d.st='reversing';
+      }
+    }
+    updateColor(id);
+    if(sel===id) refreshDetailLive();
+    updateCounts(); calcTotalPower();
+  }, 200);
+}
+
+// -- SELECTION --------------------------------------------------
+var sel = 'HVLS-08';
+
+function selectDev(id){
+  var d=DB[id]; if(!d) return;
+  sel = id;
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++) nodes[i].classList.remove('selected');
+  var el=document.querySelector('.dev[data-id="'+id+'"]');
+  if(el) el.classList.add('selected');
+  var det=g('detail'); if(det) det.classList.add('open');
+  refreshDetail(id);
+}
+
+function refreshDetail(id){
+  var d=DB[id]; if(!d) return;
+  var isHvls=(d.type==='hvls');
+  var isRelay=(d.vfd==='Relay'||d.type==='barrel'||d.type==='wallexh'||d.type==='roofexh');
+  // Show/hide speed controls based on device type
+  var speedSec=g('det-speed-section');
+  if(speedSec) speedSec.style.display=isRelay?'none':'block';
+  var relayStatus=g('det-relay-status');
+  if(relayStatus) relayStatus.style.display=isRelay?'block':'none';
+  // For relay devices hide Hz row, show simple on/off only
+  var hzRow=g('det-hz-row'); if(hzRow) hzRow.style.display=isRelay?'none':'flex';
+  setText('det-name', id);
+  setText('det-zone', d.zone+' - Warehouse');
+  setText('det-voltage', d.volt+' '+d.phase+' - '+d.vfd);
+  setText('d-addr', String(d.addr));
+  setText('d-vfd', d.vfd);
+  setText('d-type', typeLabel[d.type]||d.type);
+  setText('d-volt', d.volt+' '+d.phase);
+  setText('d-voltrow', d.volt+' '+d.phase);
+  setText('d-temp', d.t+'-F');
+  setText('d-rt', d.rt.toFixed(1)+' hrs');
+  var dr=g('dir-row'); if(dr) dr.style.display=isHvls?'flex':'none';
+  var dl=g('dir-lbl'); if(dl) dl.style.display=isHvls?'block':'none';
+  if(isHvls){
+    var df=g('dir-fwd'); if(df) df.classList.toggle('active', d.dir!=='rev');
+    var dv=g('dir-rev'); if(dv) dv.classList.toggle('active', d.dir==='rev');
+  }
+  // Manufacturer lookup
+  var mfrInfo = d.mfr ? lookupMfr(d.mfr) : null;
+  var mfrWrap=g('det-mfr-wrap');
+  if(mfrWrap){
+    if(mfrInfo){
+      mfrWrap.style.display='block';
+      setText('det-mfr-name', mfrInfo.display);
+      setText('det-mfr-phone', mfrInfo.phone);
+    var ml3=g('det-mfr-link'); if(ml3) ml3.href='tel:'+mfrInfo.phone.replace(/[^0-9+]/g,'');
+      var ml2=g('det-mfr-link'); if(ml2) ml2.href='tel:'+mfrInfo.phone.replace(/[^0-9+]/g,'');
+      setText('det-mfr-note', mfrInfo.note);
+      var ml=g('det-mfr-link'); if(ml) ml.href='https://'+mfrInfo.url;
+    } else {
+      mfrWrap.style.display = d.mfr ? 'block' : 'none';
+      setText('det-mfr-name', d.mfr||'');
+      setText('det-mfr-phone','');
+      setText('det-mfr-note','');
+    }
+  }
+  // Manufacturer input
+  var mi=g('det-mfr-input'); if(mi) mi.value=d.mfr||'';
+  // Touch support for speed slider
+  var st=g('speedTrack');
+  if(st){
+    st.ontouchstart=function(e){e.preventDefault();clickTrack(e,this);};
+    st.ontouchmove=function(e){e.preventDefault();clickTrack(e,this);};
+  }
+  refreshDetailLive();
+}
+
+function refreshDetailLive(){
+  var d=DB[sel]; if(!d) return;
+  var pct=Math.round(d.s);
+  var hz=liveHz(d), a=liveAmps(d), kw=liveKW(d);
+  var isRelay=(d.vfd==='Relay'||d.type==='barrel'||d.type==='wallexh'||d.type==='roofexh');
+  if(!isRelay){
+    var dispPct = (d.dir==='rev' && d.s>0) ? '-'+pct : pct;
+    setHTML('det-speed', dispPct+'<span class="speed-unit">%</span>');
+    setText('det-hz', hz.toFixed(1)+' Hz');
+    setStyle('spd-fill','width',pct+'%');
+    setText('d-hz', hz.toFixed(1)+' Hz');
+  }
+  // Update relay status pill
+  var rsp=g('relay-status-pill');
+  if(rsp && isRelay){
+    var stLbl=d.st==='running'?'RUNNING':d.st==='stopped'?'OFF':d.st.toUpperCase();
+    var stCol=d.st==='running'?'var(--green)':d.st==='stopped'?'var(--grey)':'var(--red)';
+    rsp.textContent=stLbl;
+    rsp.style.color=stCol;
+    rsp.style.borderColor=stCol;
+    rsp.style.background=d.st==='running'?'rgba(40,200,64,0.1)':d.st==='stopped'?'var(--surface2)':'rgba(255,59,48,0.1)';
+  }
+  setText('d-amps', a.toFixed(1)+' A');
+  setText('d-kw', kw.toFixed(2)+' kW');
+  var fe=g('d-fault');
+  if(fe){ fe.textContent=d.fault||'None'; fe.className='dr-val '+(d.fault&&d.fault!=='None'?'warn':'ok'); }
+  var stMap={
+    running:['#28c840','Running'], stopped:['#b0bec5','Stopped'],
+    ramping:['#0071e3','Ramping...'], reversing:['#0071e3','Reversing...'],
+    fault:['#e6ac00','Fault'], estop:['#ff3b30','E-Stop']
+  };
+  var sc=stMap[d.st]||stMap.stopped, c=sc[0], lbl=sc[1];
+  setClass('det-sc', 'det-status '+(d.st==='reversing'?'reversing':d.st));
+  setClass('det-slbl', 'det-slbl '+(d.st==='reversing'?'reversing':d.st));
+  setText('det-slbl', lbl);
+  setStyle('det-sdot','background',c);
+  var fw=g('fault-wrap');   if(fw) fw.style.display=(d.st==='fault'?'block':'none');
+  var ew=g('estop-wrap');   if(ew) ew.style.display=(d.st==='estop'?'block':'none');
+  var da=g('det-actions');  if(da) da.style.display=(d.st==='estop'?'none':'flex');
+  var em=g('estop-msg');
+  if(em&&d.st==='estop') em.textContent=d.fault||'Visual inspection required before restart.';
+}
+
+function closeDetail(){
+  var det=g('detail'); if(det) det.classList.remove('open');
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++) nodes[i].classList.remove('selected');
+}
+
+// -- SPEED CONTROLS ---------------------------------------------
+var speedAcceptTimer=null;
+
+function clickTrack(e, bar){
+  // Support both touch and click events
+  var clientX = (e.touches && e.touches.length) ? e.touches[0].clientX :
+                (e.changedTouches && e.changedTouches.length) ? e.changedTouches[0].clientX :
+                e.clientX;
+  var r=bar.getBoundingClientRect();
+  var pct=Math.min(100,Math.max(0,Math.round((clientX-r.left)/r.width*100)));
+  var d=DB[sel]; // fix: was referencing undefined `d`
+  var fill=g('spd-fill'); if(!fill) return;
+  fill.style.width=pct+'%';
+  fill.classList.add('accepted');
+  var dispPct = (d&&d.dir==='rev'&&d.s>0) ? '-'+pct : String(pct);
+  setHTML('det-speed', dispPct+'<span class="speed-unit">%</span>');
+  setText('det-hz', (pct/100*55).toFixed(1)+' Hz');
+  if(speedAcceptTimer) clearTimeout(speedAcceptTimer);
+  speedAcceptTimer=setTimeout(function(){ fill.classList.remove('accepted'); rampTo(sel,pct); }, 800);
+}
+
+function setPreset(pct, btn){
+  var btns=document.querySelectorAll('.preset-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  if(btn&&btn.classList) btn.classList.add('active');
+  var fill=g('spd-fill'); if(!fill) return;
+  fill.style.width=pct+'%';
+  fill.classList.add('accepted');
+  var dsp=DB[sel];
+  var dispPct = (dsp&&dsp.dir==='rev'&&dsp.s>0) ? '-'+pct : String(pct);
+  setHTML('det-speed', dispPct+'<span class="speed-unit">%</span>');
+  if(speedAcceptTimer) clearTimeout(speedAcceptTimer);
+  speedAcceptTimer=setTimeout(function(){ fill.classList.remove('accepted'); rampTo(sel,pct); }, 800);
+}
+
+// -- DIRECTION --------------------------------------------------
+function setDir(dir){
+  var d=DB[sel]; if(!d||d.type!=='hvls') return;
+  if(dir===(d.dir||'fwd')) return;
+  var df=g('dir-fwd'); if(df) df.classList.toggle('active',dir==='fwd');
+  var dv=g('dir-rev'); if(dv) dv.classList.toggle('active',dir==='rev');
+  startReverse(sel);
+}
+
+// -- FAULT MODAL ------------------------------------------------
+function openFaultModal(filter){
+  var modal=g('faultModal'), list=g('faultList'), title=g('modalTitle');
+  if(!modal||!list||!title) return;
+  var entries=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    if(filter==='fault')   return d.st==='fault'||d.st==='estop';
+    if(filter==='running') return d.st==='running'||d.st==='ramping';
+    if(filter==='stopped') return d.st==='stopped';
+    return true;
+  });
+  var labels={fault:'Active Faults',running:'Running Devices',stopped:'Stopped Devices'};
+  title.textContent = labels[filter]||'Devices';
+  list.innerHTML = entries.length ? entries.map(function(id){
+    var d=DB[id];
+    return '<div class="fault-item" onclick="closeAndSelect(\''+id+'\')">'+
+      '<div class="fault-dot" style="background:'+col(d.st)+'"></div>'+
+      '<div><div class="fault-item-name">'+id+'</div>'+
+      '<div class="fault-item-code">'+(d.fault&&d.fault!=='None'?d.fault:d.st.toUpperCase())+'</div>'+
+      '<div class="fault-item-zone">'+typeLabel[d.type]+' - '+d.zone+'</div></div>'+
+      '<div class="fault-item-right">'+d.volt+' '+d.phase+'<br>'+d.vfd+'</div></div>';
+  }).join('') : '<div style="padding:20px;text-align:center;color:var(--navy-dim)">No devices</div>';
+  modal.classList.add('open');
+}
+function closeAndSelect(id){ closeFaultModal(); selectDev(id); }
+function closeFaultModal(e){
+  var modal=g('faultModal');
+  if(e&&e.target&&e.target!==modal) return;
+  if(modal) modal.classList.remove('open');
+}
+
+// -- DEVICE CONTROLS --------------------------------------------
+function detStart(){
+  var d=DB[sel]; if(!d||d.st==='fault'||d.st==='estop') return;
+  var isRelay=(d.vfd==='Relay'||d.type==='barrel'||d.type==='wallexh'||d.type==='roofexh');
+  if(isRelay){
+    // Relay = instant on
+    d.s=100; d.tgt=100; d.st='running';
+    updateColor(sel); refreshDetailLive(); updateCounts(); calcTotalPower();
+  } else {
+    rampTo(sel, d.tgt||65);
+  }
+}
+function detStop(){
+  var d=DB[sel]; if(!d) return;
+  var isRelay=(d.vfd==='Relay'||d.type==='barrel'||d.type==='wallexh'||d.type==='roofexh');
+  if(isRelay){
+    // Relay = instant off
+    if(rampTimers[sel]){clearInterval(rampTimers[sel]);delete rampTimers[sel];}
+    d.s=0; d.tgt=0; d.st='stopped';
+    updateColor(sel); refreshDetailLive(); updateCounts(); calcTotalPower();
+  } else {
+    if(d.s>0) d.tgt=d.s;
+    rampTo(sel, 0);
+  }
+}
+function resetFault(){
+  var d=DB[sel]; if(!d) return;
+  d.st='stopped'; d.fault='None'; d.s=0; d.tgt=65;
+  updateColor(sel); refreshDetail(sel); updateCounts(); calcTotalPower();
+}
+
+function filterZone(zone){
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++){
+    var d=DB[nodes[i].dataset.id];
+    var match=(!d)||(zone==='all')||(d.zone===zone);
+    nodes[i].style.opacity=match?'1':'0.25';
+    nodes[i].style.pointerEvents=match?'auto':'none';
+  }
+}
+
+function typeCommand(typeGroup, cmd){
+  var types={hvls:['hvls'],barrel:['barrel'],exhaust:['wallexh','roofexh']};
+  var tlist=types[typeGroup]||[];
+  Object.keys(DB).forEach(function(id){
+    var d=DB[id];
+    if(!tlist.includes(d.type)||d.st==='fault'||d.st==='estop') return;
+    if(cmd==='on') rampTo(id, d.tgt||65);
+    else { if(d.s>0) d.tgt=d.s; rampTo(id, 0); }
+  });
+}
+
+function setZoneSpeed(pct, zone, btn){
+  if(btn){
+    var grp=btn.closest?btn.closest('.sb-group'):null;
+    if(grp){ var sb=grp.querySelectorAll('.spd-btn'); for(var i=0;i<sb.length;i++) sb[i].classList.remove('active'); }
+    btn.classList.add('active');
+  }
+  var ids=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    return d.st!=='fault'&&d.st!=='estop'&&(zone==='all'||d.zone===zone);
+  });
+  ids.forEach(function(id){ var d=DB[id]; if(d.st==='running'||d.st==='ramping') rampTo(id,pct); });
+  staggeredStart(ids, pct);
+}
+
+// -- STAGGERED START --------------------------------------------
+var STAGGER_DELAY=8000, staggerQ=[], staggerTimer=null, staggerTotal=0, staggerDone=0;
+
+function staggeredStart(ids, targetSpeed){
+  cancelStagger();
+  staggerQ=ids.filter(function(id){
+    var d=DB[id];
+    return d&&d.st!=='fault'&&d.st!=='estop'&&d.st!=='running'&&d.st!=='ramping';
+  });
+  if(!staggerQ.length){
+    if(targetSpeed!==null) ids.forEach(function(id){ var d=DB[id]; if(d&&(d.st==='running'||d.st==='ramping')) rampTo(id,targetSpeed); });
+    return;
+  }
+  staggerTotal=staggerQ.length; staggerDone=0;
+  showToast('Starting '+staggerTotal+' motor'+(staggerTotal>1?'s':''), '8s delay between starts', 0);
+  function fire(){
+    if(!staggerQ.length){
+      if(targetSpeed!==null) ids.forEach(function(id){ var d=DB[id]; if(d&&d.st==='running') rampTo(id,targetSpeed); });
+      showToast('All motors started','Sequence complete',100);
+      setTimeout(hideToast, 2500); return;
+    }
+    var id=staggerQ.shift(); staggerDone++;
+    var d=DB[id]; if(!d){fire();return;}
+    var tgt=(targetSpeed!==null)?targetSpeed:(d.tgt||65);
+    d.tgt=tgt; rampTo(id,tgt);
+    var pct=Math.round(staggerDone/staggerTotal*100);
+    showToast('Motor '+staggerDone+'/'+staggerTotal+' - '+id, '>> '+tgt+'% - Next in '+(STAGGER_DELAY/1000)+'s', pct);
+    staggerTimer=setTimeout(fire, staggerQ.length?STAGGER_DELAY:500);
+  }
+  fire();
+}
+function cancelStagger(){ if(staggerTimer){clearTimeout(staggerTimer);staggerTimer=null;} staggerQ=[]; hideToast(); }
+function showToast(t,s,p){
+  setText('toastTitle',t); setText('toastSub',s);
+  var tp=g('toastProg'); if(tp) tp.style.width=p+'%';
+  var st=g('startToast'); if(st) st.classList.add('visible');
+}
+function hideToast(){ var st=g('startToast'); if(st) st.classList.remove('visible'); }
+
+function allFansOn(){ staggeredStart(Object.keys(DB), null); }
+function allFansOff(){
+  Object.keys(DB).forEach(function(id){
+    var d=DB[id]; if(!d||d.st==='fault'||d.st==='estop') return;
+    if(d.s>0) d.tgt=d.s;
+    rampToSlow(id, 0); // slightly slower ramp down
+  });
+}
+
+function updateCounts(){
+  var vals=Object.keys(DB).map(function(k){return DB[k];});
+  setText('cnt-run',  String(vals.filter(function(d){return d.st==='running'||d.st==='ramping'||d.st==='reversing';}).length));
+  setText('cnt-stop', String(vals.filter(function(d){return d.st==='stopped';}).length));
+  var faults=vals.filter(function(d){return d.st==='fault'||d.st==='estop';}).length;
+  setText('cnt-fault', String(faults));
+  var fi=g('faultStatItem'); if(fi) fi.classList.toggle('has-fault', faults>0);
+}
+
+// -- EDIT / DRAG MAP --------------------------------------------
+var editMode=false;
+function toggleEditMode(){
+  editMode=!editMode;
+  var fp=g('fp'); if(fp) fp.classList.toggle('edit-mode',editMode);
+  var eb=g('editBanner'); if(eb) eb.style.display=editMode?'block':'none';
+  var ne=g('bnav-edit'); if(ne) ne.classList.toggle('active',editMode);
+  setupDrag();
+}
+
+function setupDrag(){
+  var nodes=document.querySelectorAll('.dev');
+  for(var i=0;i<nodes.length;i++){
+    nodes[i].removeEventListener('touchstart',onDragStart);
+    nodes[i].removeEventListener('mousedown',onDragStart);
+    if(editMode){
+      nodes[i].addEventListener('touchstart',onDragStart,{passive:false});
+      nodes[i].addEventListener('mousedown',onDragStart);
+    }
+  }
+}
+
+var dragEl=null;
+function onDragStart(e){
+  if(!editMode) return;
+  e.preventDefault();
+  dragEl=e.currentTarget||e.target;
+  if(!dragEl) return;
+  dragEl.classList.add('dragging');
+  var fp=g('fp'); if(!fp) return;
+  var fpR=fp.getBoundingClientRect();
+  var t=e.touches?e.touches[0]:e;
+  var elR=dragEl.getBoundingClientRect();
+  var ox=t.clientX-elR.left-elR.width/2;
+  var oy=t.clientY-elR.top-elR.height/2;
+  var cap=dragEl;
+  function onMove(e2){
+    if(!cap) return;
+    var t2=e2.touches?e2.touches[0]:e2;
+    cap.style.left=Math.min(98,Math.max(2,(t2.clientX-fpR.left-ox)/fpR.width*100)).toFixed(1)+'%';
+    cap.style.top =Math.min(98,Math.max(2,(t2.clientY-fpR.top -oy)/fpR.height*100)).toFixed(1)+'%';
+  }
+  function onEnd(){
+    if(cap) cap.classList.remove('dragging');
+    dragEl=null;
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('touchend',onEnd);
+    document.removeEventListener('mouseup',onEnd);
+    if(editMode) toggleEditMode();
+  }
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchend',onEnd);
+  document.addEventListener('mouseup',onEnd);
+}
+
+// -- BOTTOM NAV -------------------------------------------------
+function bnav(btn, tab){
+  var items=document.querySelectorAll('.bnav-item');
+  for(var i=0;i<items.length;i++) items[i].classList.remove('active');
+  if(btn) btn.classList.add('active');
+  // Show/hide panels
+  showPanel(tab);
+}
+
+function showPanel(tab){
+  // Hide all panels first
+  var fp=g('fp'), det=g('detail');
+  var panels=['panel-schedule','panel-settings','panel-zones'];
+  panels.forEach(function(id){ var p=g(id); if(p) p.style.display='none'; });
+
+  if(tab==='dash'){
+    if(fp) fp.style.display='';
+    // Dashboard - default view
+  } else if(tab==='zones'){
+    if(fp) fp.style.display='';
+    var sb=g('speedBar'); if(sb&&sb.scrollTo) sb.scrollTo({left:120,behavior:'smooth'});
+  } else if(tab==='sched'){
+    if(fp) fp.style.display='none';
+    var p=g('panel-schedule'); if(p) p.style.display='flex';
+    if(det) det.classList.remove('open');
+  } else if(tab==='settings'){
+    // Settings opens as a bottom sheet modal, keeps floor plan visible
+    openSettingsModal();
+    // Immediately revert active state - settings is a modal not a tab
+    var items2=document.querySelectorAll('.bnav-item');
+    for(var i=0;i<items2.length;i++) items2[i].classList.remove('active');
+    var db=g('bnav-dash'); if(db) db.classList.add('active');
+  }
+}
+
+// -- DARK MODE --------------------------------------------------
+function toggleDark(){
+  var html=document.documentElement;
+  var dark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme', dark?'light':'dark');
+  setText('darkToggle', dark?'-':'--');
+}
+
+// -- CLOCK ------------------------------------------------------
+function tick(){
+  var n=new Date(), h=n.getHours(), m=n.getMinutes();
+  var ap=h>=12?'PM':'AM'; h=h%12||12;
+  var dy=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var ck=g('clock');
+  if(ck) ck.innerHTML='<div>'+h+':'+String(m).padStart(2,'0')+' '+ap+'</div>'+
+    '<div class="topbar-clock-date">'+dy[n.getDay()]+' '+mo[n.getMonth()]+' '+n.getDate()+'</div>';
+}
+tick();
+setInterval(tick, 15000);
+
+// Live data flicker
+setInterval(function(){
+  var d=DB[sel];
+  if(d&&(d.st==='running'||d.st==='ramping'||d.st==='reversing')&&d.s>0){
+    d.maxA=Math.max(0, +(d.maxA+(Math.random()-0.5)*0.05).toFixed(2));
+    setText('d-amps', liveAmps(d).toFixed(1)+' A');
+    setText('d-kw',   liveKW(d).toFixed(2)+' kW');
+  }
+  setText('temp-top', (77+Math.round((Math.random()-0.5)*2))+'-F');
+  calcTotalPower();
+}, 2000);
+
+// -- DEBUG -----------------------------------------------------
+window.debugFanOS = function(){
+  console.log('sel:', sel);
+  console.log('rotors:', Object.keys(rotors).length);
+  console.log('totalPower:', g('totalPower')&&g('totalPower').textContent);
+};
+
+
+
+
+// -- STAGGERED SPEED CHANGE ------------------------------------
+// Used when Low/Med/High pressed -- staggers ALL fans not just stopped ones.
+// Running fans: 3s delay between each (already spinning, smaller inrush).
+// Stopped fans: full 8s delay (motor startup draws more current).
+var speedChangeQueue=[], speedChangeTimer=null;
+var SHORT_STAGGER=3000; // 3s between running fan speed changes
+
+function staggeredSpeedChange(ids, pct){
+  // Cancel any in-progress speed change
+  if(speedChangeTimer){ clearTimeout(speedChangeTimer); speedChangeTimer=null; }
+  speedChangeQueue=[];
+  cancelStagger(); // cancel any staggered start too
+
+  // Split: stopped fans go last with full stagger, running go first with short stagger
+  var running=ids.filter(function(id){ var d=DB[id]; return d&&(d.st==='running'||d.st==='ramping'); });
+  var stopped=ids.filter(function(id){ var d=DB[id]; return d&&d.st==='stopped'; });
+
+  // Build one ordered queue: running first (short delay), then stopped (full delay)
+  // Each item: {id, pct, delay}
+  var queue=[];
+  for(var i=0;i<running.length;i++) queue.push({id:running[i],pct:pct,delay:SHORT_STAGGER});
+  for(var j=0;j<stopped.length;j++) queue.push({id:stopped[j],pct:pct,delay:STAGGER_DELAY});
+
+  if(!queue.length) return;
+
+  var total=queue.length, done=0;
+  showToast('Adjusting '+total+' fan'+(total>1?'s':''), 'Staggered to protect your panel', 0);
+
+  function fireNext(){
+    if(!queue.length){
+      showToast('All fans adjusted','Sequence complete',100);
+      setTimeout(hideToast,2000);
+      return;
+    }
+    var item=queue.shift(); done++;
+    var d=DB[item.id]; if(!d){ fireNext(); return; }
+    rampTo(item.id, item.pct);
+    var progress=Math.round(done/total*100);
+    var label=item.delay===SHORT_STAGGER?'Running fan':'Starting fan';
+    showToast(label+' '+done+'/'+total+' - '+item.id,
+              item.pct+'% - Next in '+(item.delay/1000)+'s', progress);
+    speedChangeTimer=setTimeout(fireNext, queue.length ? item.delay : 400);
+  }
+  fireNext();
+}
+
+// -- ZONE BAR --------------------------------------------------
+var speedZone = 'all'; // tracks current zone bar selection
+
+function onSpeedZoneChange(zone){
+  speedZone = zone;
+  // Also sync main zone dropdown
+  var zd=g('zoneDropdown'); if(zd) zd.value=zone;
+  filterZone(zone);
+}
+
+function zoneBarOn(){
+  if(speedChangeTimer){ clearTimeout(speedChangeTimer); speedChangeTimer=null; }
+  var ids=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    return d && d.st!=='fault' && d.st!=='estop' && d.st!=='running' && d.st!=='ramping' &&
+           (speedZone==='all' || d.zone===speedZone);
+  });
+  staggeredStart(ids, null);
+}
+
+function zoneBarOff(){
+  Object.keys(DB).forEach(function(id){
+    var d=DB[id];
+    if(!d||d.st==='fault'||d.st==='estop') return;
+    if(speedZone!=='all' && d.zone!==speedZone) return;
+    if(d.s>0){ d.tgt=d.s; rampToSlow(id,0); }
+  });
+}
+
+function zoneBarSpeed(pct, btn){
+  // Clear active states
+  var btns=document.querySelectorAll('.spd-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  if(btn) btn.classList.add('active');
+  // ALL fans stagger -- running fans use short delay, stopped use full delay
+  var ids=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    return d && d.st!=='fault' && d.st!=='estop' &&
+           (speedZone==='all' || d.zone===speedZone);
+  });
+  staggeredSpeedChange(ids, pct);
+}
+
+function typeCommandStagger(typeGroup, cmd){
+  var types={hvls:['hvls'],barrel:['barrel'],exhaust:['wallexh','roofexh']};
+  var tlist=types[typeGroup]||[];
+  var ids=Object.keys(DB).filter(function(id){
+    var d=DB[id];
+    return tlist.indexOf(d.type)>-1 && d.st!=='fault' && d.st!=='estop' &&
+           (speedZone==='all' || d.zone===speedZone);
+  });
+  if(cmd==='on'){
+    // Stagger all -- stopped fans with full delay
+    var toStart=ids.filter(function(id){ return DB[id].st==='stopped'; });
+    if(toStart.length>0) staggeredStart(toStart, null);
+  } else {
+    // Ramp all down with slow step -- no stagger needed for shutdown
+    ids.forEach(function(id){ var d=DB[id]; if(d&&d.s>0){d.tgt=d.s;rampToSlow(id,0);} });
+  }
+}
+
+
+// -- MANUFACTURER INPUT ----------------------------------------
+function onMfrInput(val){
+  var d=DB[sel]; if(!d) return;
+  d.mfr = val;
+  var mfrInfo = lookupMfr(val);
+  var mfrWrap=g('det-mfr-wrap');
+  if(mfrWrap) mfrWrap.style.display = (mfrInfo||val) ? 'block' : 'none';
+  if(mfrInfo){
+    setText('det-mfr-name', mfrInfo.display);
+    setText('det-mfr-phone', mfrInfo.phone);
+    var ml3=g('det-mfr-link'); if(ml3) ml3.href='tel:'+mfrInfo.phone.replace(/[^0-9+]/g,'');
+      var ml2=g('det-mfr-link'); if(ml2) ml2.href='tel:'+mfrInfo.phone.replace(/[^0-9+]/g,'');
+    setText('det-mfr-note', mfrInfo.note);
+    var ml=g('det-mfr-link'); if(ml) ml.href='https://'+mfrInfo.url;
+  } else if(val){
+    setText('det-mfr-name', val);
+    setText('det-mfr-phone','');
+    setText('det-mfr-note','');
+  }
+}
+
+// -- FAULT DIAGNOSTIC PANEL ------------------------------------
+function openFaultGuide(faultCode, deviceId){
+  var guide = lookupFault(faultCode);
+  var devD = DB[deviceId||sel];
+  var modal=g('faultGuideModal'); if(!modal) return;
+  var title=g('fg-title'), code=g('fg-code'), causes=g('fg-causes'), checks=g('fg-checks');
+  if(code) code.textContent = faultCode;
+  if(title) title.textContent = guide ? guide.title : 'Unknown Fault';
+  if(causes){
+    if(guide&&guide.causes.length){
+      causes.innerHTML = guide.causes.map(function(c){
+        return '<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);">'+
+               '<span style="color:var(--yellow);flex-shrink:0;">&#9650;</span>'+
+               '<span style="font-size:12px;color:var(--navy);">'+c+'</span></div>';
+      }).join('');
+    } else {
+      causes.innerHTML='<div style="padding:8px 0;font-size:12px;color:var(--navy-dim);">No specific causes on record for this code. Contact manufacturer support.</div>';
+    }
+  }
+  if(checks){
+    if(guide&&guide.checks.length){
+      checks.innerHTML = guide.checks.map(function(c,i){
+        return '<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border2);">'+
+               '<div style="width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;'+
+               'font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">'+(i+1)+'</div>'+
+               '<span style="font-size:12px;color:var(--navy);">'+c+'</span></div>';
+      }).join('');
+    } else {
+      checks.innerHTML='<div style="padding:8px 0;font-size:12px;color:var(--navy-dim);">Consult VFD manual for fault '+faultCode+'</div>';
+    }
+  }
+  // Show manufacturer support if available
+  var mfrSupport=g('fg-mfr-support');
+  if(mfrSupport&&devD){
+    var mfrInfo=lookupMfr(devD.mfr||'');
+    if(mfrInfo){
+      mfrSupport.style.display='block';
+      setText('fg-mfr-display', mfrInfo.display);
+      setText('fg-mfr-tel', mfrInfo.phone);
+      var tl=g('fg-mfr-tel'); if(tl) tl.href='tel:'+mfrInfo.phone.replace(/[^0-9+]/g,'');
+    } else {
+      mfrSupport.style.display='none';
+    }
+  }
+  modal.classList.add('open');
+}
+function closeFaultGuide(e){
+  var m=g('faultGuideModal');
+  if(e&&e.target&&e.target!==m) return;
+  if(m) m.classList.remove('open');
+}
+
+// -- SETTINGS MODAL --------------------------------------------
+function openSettingsModal(){
+  var m=g('settingsModal'); if(m) m.classList.add('open');
+}
+function closeSettingsModal(e){
+  var m=g('settingsModal');
+  if(e&&e.target&&e.target!==m) return;
+  if(m) m.classList.remove('open');
+}
+
+// -- DELETE FAN ------------------------------------------------
+var pendingDeleteId = null;
+function deleteFan(){
+  if(!sel||!DB[sel]) return;
+  pendingDeleteId = sel;
+  var dm=g('deleteModal'); if(!dm) return;
+  var dn=g('delete-fan-name'); if(dn) dn.textContent='Remove '+sel+' from system?';
+  dm.classList.add('open');
+}
+function closeDeleteModal(e){
+  var m=g('deleteModal');
+  if(e&&e.target&&e.target!==m) return;
+  if(m) m.classList.remove('open');
+  pendingDeleteId=null;
+}
+function confirmDelete(){
+  if(!pendingDeleteId) return;
+  var id=pendingDeleteId;
+  // Stop the fan first
+  if(rampTimers[id]){ clearInterval(rampTimers[id]); delete rampTimers[id]; }
+  if(rotors[id]) delete rotors[id];
+  delete DB[id];
+  // Remove DOM node
+  var node=document.querySelector('.dev[data-id="'+id+'"]');
+  if(node) node.parentNode.removeChild(node);
+  // Close panels
+  closeDeleteModal();
+  closeDetail();
+  updateCounts();
+  calcTotalPower();
+  // Select another fan
+  var remaining=Object.keys(DB);
+  if(remaining.length>0) selectDev(remaining[0]);
+}
+
+// -- ESTOP RESET (requires visual inspection confirm) ----------
+function confirmEstopReset(){
+  if(!sel||!DB[sel]||DB[sel].st!=='estop') return;
+  var d=DB[sel];
+  d.st='stopped'; d.fault='None'; d.s=0; d.tgt=65;
+  updateColor(sel); refreshDetail(sel); updateCounts(); calcTotalPower();
+}
+
+// -- INIT -------------------------------------------------------
+buildAllNodes();
+updateCounts();
+calcTotalPower();
+selectDev('HVLS-08');
+
+</script>
+</body>
+</html>
